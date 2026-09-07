@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+*.db
+ml_models/*.joblib
+node_modules/
+frontend/dist/
+.pytest_cache/
+coverage.xml
