@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelAI // Operations Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #070b14;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --border: rgba(148, 163, 184, 0.12);
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.35);
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.06) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+    .shell { display: flex; min-height: 100vh; }
+    aside.sidebar {
+      width: 260px;
+      background: rgba(10, 15, 29, 0.95);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand-logo .symbol { font-size: 24px; color: var(--cyan); text-shadow: 0 0 12px var(--cyan-glow); }
+    .brand-logo h1 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+    .brand-logo span { font-size: 9px; color: var(--cyan); letter-spacing: 1.5px; font-weight: 600; }
+    .nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .nav-item.active {
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.12);
+      border-left: 3px solid var(--cyan);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .user-status { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: #fff;
+    }
+    .user-details .name { font-size: 12px; font-weight: 600; color: #fff; }
+    .user-details .role { font-size: 10px; color: var(--cyan); font-family: var(--font-mono); }
+    .btn-signout {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); padding: 8px; border-radius: 6px;
+      font-size: 11px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-signout:hover { background: rgba(244, 63, 94, 0.1); color: var(--rose); border-color: rgba(244, 63, 94, 0.3); }
+
+    .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    header.top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 32px; border-bottom: 1px solid var(--border);
+      background: rgba(10, 15, 29, 0.6); backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 40;
+    }
+    .top-bar h2 { font-size: 18px; font-weight: 700; color: #fff; }
+    .top-bar p { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); }
+    .system-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; color: var(--emerald); font-family: var(--font-mono);
+    }
+    .pulse-dot {
+      width: 6px; height: 6px; background: var(--emerald); border-radius: 50%;
+      box-shadow: 0 0 8px var(--emerald); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0.6; } }
+
+    .page-container { padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; }
+    .card-panel {
+      background: var(--bg-card); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 20px; position: relative;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .card-header h3 { font-size: 15px; font-weight: 600; color: #fff; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .kpi-tile {
+      background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .kpi-tile .label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); }
+    .kpi-tile .value { font-size: 26px; font-weight: 800; font-family: var(--font-mono); color: #fff; }
+    .kpi-tile .subtext { font-size: 10px; color: var(--cyan); font-family: var(--font-mono); }
+
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table.soc-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+    table.soc-table th {
+      background: rgba(15, 23, 42, 0.9); color: var(--text-dim);
+      font-weight: 600; font-size: 10px; text-transform: uppercase;
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+    }
+    table.soc-table td { padding: 10px 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.06); color: var(--text-muted); }
+    table.soc-table tr:hover td { background: rgba(255, 255, 255, 0.02); color: #fff; }
+    code { font-family: var(--font-mono); font-size: 11px; background: rgba(0, 0, 0, 0.3); padding: 2px 6px; border-radius: 4px; color: var(--cyan); }
+
+    .badge {
+      display: inline-flex; align-items: center; padding: 2px 6px;
+      border-radius: 4px; font-size: 9px; font-weight: 700;
+      font-family: var(--font-mono); text-transform: uppercase;
+    }
+    .badge.critical { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge.high { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge.medium { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge.low { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge.resolved { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge.pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 7px 14px; font-size: 12px; font-weight: 600; border-radius: 6px;
+      border: none; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans);
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--cyan), #0284c7); color: #fff; box-shadow: 0 0 10px var(--cyan-glow); }
+    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn-danger { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .btn-danger:hover { background: var(--rose); color: #fff; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+    .search-input, .select-input {
+      background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border);
+      color: #fff; padding: 7px 12px; border-radius: 6px; font-size: 12px;
+      font-family: var(--font-sans); outline: none;
+    }
+    .search-input:focus, .select-input:focus { border-color: var(--cyan); }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px); display: flex; align-items: center;
+      justify-content: center; z-index: 100; padding: 20px;
+    }
+    .modal-content {
+      background: #0f172a; border: 1px solid var(--border-glow);
+      border-radius: 12px; padding: 20px; width: 100%; max-width: 600px;
+      max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+    .modal-close { background: transparent; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; }
+    .error-banner { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+
+    /* Auth screen */
+    .auth-box {
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glow); border-radius: 16px;
+      padding: 36px; width: 100%; max-width: 420px; margin: 100px auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .form-group input {
+      background: rgba(10, 15, 29, 0.8); border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 12px; color: #fff; font-size: 13px; outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Vanilla React bundle loader for standalone zero-node execution -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const API_BASE = '/api/v1';
+
+    async function req(path, options = {}) {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {})
+      };
+      const res = await fetch(API_BASE + path, { ...options, headers });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(d.detail || 'Request failed');
+      }
+      return res.json();
+    }
+
+    async function downloadFile(path, filename) {
+      const token = localStorage.getItem('token');
+      const res = await fetch(API_BASE + path, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (!res.ok) throw new Error('PDF Generation failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function App() {
+      const [token, setToken] = useState(localStorage.getItem('token'));
+      const [currentUser, setCurrentUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('user')); } catch (e) { return null; }
+      });
+      const [page, setPage] = useState('dashboard');
+
+      const fetchMe = () => {
+        if (!token) return;
+        req('/auth/me').then(u => {
+          setCurrentUser(u);
+          localStorage.setItem('user', JSON.stringify(u));
+        }).catch(err => {
+          console.warn('Session expired or invalid', err);
+        });
+      };
+
+      useEffect(() => {
+        fetchMe();
+      }, [token]);
+
+      if (!token) {
+        return <Login onLogin={(t, u) => {
+          localStorage.setItem('token', t);
+          if (u) localStorage.setItem('user', JSON.stringify(u));
+          setToken(t);
+          setCurrentUser(u);
+        }} />;
+      }
+
+      const isAdmin = currentUser?.role === 'ADMIN';
+
+      const navItems = [
+        ['dashboard', 'Dashboard', '◈'],
+        ['events', 'Live Events', '☵'],
+        ['alerts', 'Alerts & Triage', '⚠'],
+        ['incidents', 'Incidents & Forensics', '⚡'],
+        ['assistant', 'AI SOC Assistant', '💬'],
+        ['mitre', 'MITRE ATT&CK', '⬡'],
+        ['ml-benchmarks', 'ML Benchmarks', '📊'],
+        ['assets', 'Asset Inventory', '🖥'],
+        ['analytics', 'SOC Analytics', '📈'],
+        ['threat-intel', 'Threat Intelligence', '☣'],
+        ['detection', 'Detection Rules', '⚙'],
+        ['response', 'Response & Approvals', '🛡'],
+        ['reports', 'Forensic Reports', '📄'],
+        ['health', 'System Diagnostics', '♥'],
+        ...(isAdmin ? [['users', 'User Governance', '👥']] : []),
+        ['profile', 'User Profile', '👤']
+      ];
+
+      const initial = (currentUser?.full_name || currentUser?.username || 'A').charAt(0).toUpperCase();
+
+      return (
+        <div className="shell">
+          <aside className="sidebar">
+            <div className="brand-logo">
+              <span className="symbol">◈</span>
+              <div>
+                <h1>SENTINELAI</h1>
+                <span>AUTONOMOUS SOC</span>
+              </div>
+            </div>
+            <nav className="nav-links">
+              {navItems.map(([key, label, icon]) => (
+                <div
+                  key={key}
+                  onClick={() => setPage(key)}
+                  className={`nav-item ${page === key ? 'active' : ''}`}
+                >
+                  <span style={{ fontSize: '14px' }}>{icon}</span>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </nav>
+            <div className="sidebar-footer">
+              <div
+                className="user-status"
+                onClick={() => setPage('profile')}
+                style={{ cursor: 'pointer', padding: '6px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)' }}
+                title="View & Edit Profile"
+              >
+                <div className="avatar">{initial}</div>
+                <div className="user-details">
+                  <span className="name">{currentUser?.full_name || 'SOC Analyst'}</span>
+                  <span className="role">ROLE: {currentUser?.role || 'SOC_ANALYST'}</span>
+                </div>
+              </div>
+              <button onClick={() => {
+                req('/auth/logout', { method: 'POST' }).catch(() => {});
+                localStorage.clear();
+                setToken(null);
+                setCurrentUser(null);
+              }} className="btn-signout">
+                Sign Out of Workspace
+              </button>
+            </div>
+          </aside>
+
+          <div className="main-content">
+            <header className="top-bar">
+              <div>
+                <h2>Operations Control Center</h2>
+                <p>LOCAL STANDALONE SOC WORKSPACE // ACTIVE PROTECTION // USER: @{currentUser?.username || 'analyst'}</p>
+              </div>
+              <div className="system-badge">
+                <span className="pulse-dot" />
+                <span>LIVE TELEMETRY ACTIVE</span>
+              </div>
+            </header>
+
+            <main>
+              {page === 'dashboard' && <DashboardView />}
+              {page === 'events' && <EventsView />}
+              {page === 'alerts' && <AlertsView onEscalate={() => setPage('incidents')} />}
+              {page === 'incidents' && <IncidentsView />}
+              {page === 'assistant' && <AssistantView />}
+              {page === 'mitre' && <MitreView />}
+              {page === 'ml-benchmarks' && <MLBenchmarksView />}
+              {page === 'assets' && <AssetsView />}
+              {page === 'analytics' && <AnalyticsView />}
+              {page === 'threat-intel' && <ThreatIntelView />}
+              {page === 'detection' && <DetectionView />}
+              {page === 'response' && <ResponseView />}
+              {page === 'reports' && <ReportsView />}
+              {page === 'health' && <HealthView />}
+              {page === 'users' && <UsersManagementView currentUser={currentUser} />}
+              {page === 'profile' && <ProfileView currentUser={currentUser} onUpdate={(u) => { setCurrentUser(u); localStorage.setItem('user', JSON.stringify(u)); }} />}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    function Login({ onLogin }) {
+      const [authTab, setAuthTab] = useState('login'); // 'login' | 'register'
+      const [identifier, setIdentifier] = useState('admin@sentinelai.local');
+      const [password, setPassword] = useState('SentinelDemo!2026');
+      const [rememberMe, setRememberMe] = useState(false);
+
+      // Register fields
+      const [fullName, setFullName] = useState('');
+      const [regUsername, setRegUsername] = useState('');
+      const [regEmail, setRegEmail] = useState('');
+      const [regRole, setRegRole] = useState('SOC_ANALYST');
+      const [regPassword, setRegPassword] = useState('');
+      const [regConfirm, setRegConfirm] = useState('');
+
+      // Forgot / Reset Password state
+      const [showForgot, setShowForgot] = useState(false);
+      const [forgotIdentifier, setForgotIdentifier] = useState('');
+      const [resetData, setResetData] = useState(null);
+      const [newPass, setNewPass] = useState('');
+      const [forgotMsg, setForgotMsg] = useState('');
+      const [successBanner, setSuccessBanner] = useState('');
+
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+
+      const getStrength = (pwd) => {
+        let s = 0;
+        if (pwd.length >= 8) s++;
+        if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) s++;
+        if (/[0-9]/.test(pwd)) s++;
+        if (/[^A-Za-z0-9]/.test(pwd)) s++;
+        return s;
+      };
+
+      const strength = getStrength(regPassword);
+      const strengthColors = ['#ff3366', '#ff9900', '#ffea00', '#00f3ff', '#00ff9d'];
+      const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Secure'];
+
+      const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+          const res = await req('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+              identifier: identifier.trim(),
+              password,
+              remember_me: rememberMe
+            })
+          });
+          onLogin(res.access_token, res.user);
+        } catch (err) {
+          setError(err.message || 'Authentication failed');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleRegisterSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (regUsername.length < 3) {
+          setError('Username must be at least 3 characters long.');
+          return;
+        }
+        if (!/^[a-zA-Z0-9_\-\.]+$/.test(regUsername)) {
+          setError('Username can only contain alphanumeric characters, underscores, hyphens, and dots.');
+          return;
+        }
+        if (regPassword.length < 8) {
+          setError('Password must be at least 8 characters long.');
+          return;
+        }
+        if (regPassword !== regConfirm) {
+          setError('Passwords do not match.');
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const res = await req('/auth/signup', {
+            method: 'POST',
+            body: JSON.stringify({
+              full_name: fullName.trim(),
+              username: regUsername.trim().toLowerCase(),
+              email: regEmail.trim().toLowerCase(),
+              password: regPassword,
+              role_requested: regRole
+            })
+          });
+          onLogin(res.access_token, res.user);
+        } catch (err) {
+          setError(err.message || 'Registration failed');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleForgotSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setForgotMsg('');
+        try {
+          const res = await req('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ identifier: forgotIdentifier.trim() })
+          });
+          if (res.reset_token) {
+            setResetData({ token: res.reset_token, email: res.email || forgotIdentifier });
+            setForgotMsg('Reset token generated.');
+          } else {
+            setForgotMsg(res.detail || 'Reset request processed.');
+          }
+        } catch (err) {
+          setForgotMsg(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleResetSubmit = async (e) => {
+        e.preventDefault();
+        if (!resetData?.token) return;
+        setLoading(true);
+        try {
+          const res = await req('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token: resetData.token, new_password: newPass })
+          });
+          setShowForgot(false);
+          setResetData(null);
+          setSuccessBanner('Password reset successfully. You can now log in.');
+          setAuthTab('login');
+          setPassword(newPass);
+        } catch (err) {
+          setForgotMsg(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const setPreset = (id, pass) => {
+        setIdentifier(id);
+        setPassword(pass);
+        setError('');
+      };
+
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="auth-box" style={{ maxWidth: '460px', width: '100%', margin: 0 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(6, 182, 212, 0.1)', border: '1px solid rgba(6, 182, 212, 0.3)', marginBottom: '10px' }}>
+                <span style={{ fontSize: '24px', color: 'var(--cyan)' }}>◈</span>
+              </div>
+              <h1 style={{ fontSize: '22px', fontWeight: 800, margin: 0, letterSpacing: '0.05em' }}>SENTINELAI</h1>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Autonomous AI-Assisted Security Operations Center</p>
+            </div>
+
+            {/* Auth Mode Tabs */}
+            <div style={{ display: 'flex', background: 'var(--bg-main)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <button
+                type="button"
+                onClick={() => { setAuthTab('login'); setError(''); }}
+                style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: authTab === 'login' ? 'var(--cyan)' : 'transparent', color: authTab === 'login' ? '#000' : 'var(--text-muted)', fontWeight: 600, fontSize: '12px' }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthTab('register'); setError(''); }}
+                style={{ flex: 1, padding: '8px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: authTab === 'register' ? 'var(--cyan)' : 'transparent', color: authTab === 'register' ? '#000' : 'var(--text-muted)', fontWeight: 600, fontSize: '12px' }}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {error && <div className="error-banner">{error}</div>}
+            {successBanner && <div className="badge-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: 'var(--emerald)', padding: '8px 12px', borderRadius: '6px', textAlign: 'center', fontSize: '12px' }}>{successBanner}</div>}
+
+            {authTab === 'login' ? (
+              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="form-group">
+                  <label>Username or Account Email</label>
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={e => setIdentifier(e.target.value)}
+                    placeholder="e.g. admin or analyst@sentinelai.local"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label>Master Password</label>
+                    <button
+                      type="button"
+                      onClick={() => { setShowForgot(true); setForgotIdentifier(identifier); setForgotMsg(''); setResetData(null); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    Remember me (30-day session)
+                  </label>
+                </div>
+
+                <button disabled={loading} className="btn btn-primary" style={{ padding: '11px', marginTop: '4px', fontWeight: 600 }}>
+                  {loading ? 'Authenticating…' : 'Authenticate & Enter SOC →'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    placeholder="e.g. Alex Mercer"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className="form-group">
+                    <label>Unique Username</label>
+                    <input
+                      type="text"
+                      value={regUsername}
+                      onChange={e => setRegUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                      placeholder="e.g. alex_soc"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Role Requested</label>
+                    <select
+                      value={regRole}
+                      onChange={e => setRegRole(e.target.value)}
+                      style={{ background: 'rgba(10, 15, 29, 0.8)', border: '1px solid var(--border)', borderRadius: '6px', padding: '9px 10px', color: '#fff', fontSize: '12px' }}
+                    >
+                      <option value="SOC_ANALYST">SOC Analyst</option>
+                      <option value="VIEWER">Auditor / Viewer</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Official Email</label>
+                  <input
+                    type="email"
+                    value={regEmail}
+                    onChange={e => setRegEmail(e.target.value)}
+                    placeholder="alex@sentinelai.local"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Password (min 8 chars)</label>
+                  <input
+                    type="password"
+                    value={regPassword}
+                    onChange={e => setRegPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    required
+                  />
+                  {regPassword && (
+                    <div style={{ marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: strengthColors[strength], marginBottom: '2px' }}>
+                        <span>Strength: {strengthLabels[strength]}</span>
+                        <span>{strength * 25}%</span>
+                      </div>
+                      <div style={{ height: '3px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ width: `${(strength + 1) * 20}%`, height: '100%', background: strengthColors[strength], transition: 'all 0.3s ease' }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    value={regConfirm}
+                    onChange={e => setRegConfirm(e.target.value)}
+                    placeholder="Re-type password"
+                    required
+                  />
+                </div>
+
+                <button disabled={loading} className="btn btn-primary" style={{ padding: '11px', marginTop: '4px', fontWeight: 600 }}>
+                  {loading ? 'Creating Account…' : 'Register Account & Enter SOC →'}
+                </button>
+              </form>
+            )}
+
+            {authTab === 'login' && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', marginBottom: '8px', textAlign: 'center' }}>
+                  Quick Demo Presets
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPreset('admin@sentinelai.local', 'SentinelDemo!2026')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '11px', padding: '6px' }}
+                  >
+                    👑 Admin (Email)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreset('admin', 'SentinelDemo!2026')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '11px', padding: '6px' }}
+                  >
+                    🛡️ Admin (Username)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Forgot Password Modal */}
+          {showForgot && (
+            <div className="modal-overlay" onClick={() => setShowForgot(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+                <div className="modal-header">
+                  <h3 style={{ color: 'var(--cyan)' }}>🔑 Account Password Recovery</h3>
+                  <button className="modal-close" onClick={() => setShowForgot(false)}>✕</button>
+                </div>
+
+                {forgotMsg && <div className="badge-pill" style={{ background: 'rgba(6, 182, 212, 0.15)', color: 'var(--cyan)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>{forgotMsg}</div>}
+
+                {!resetData ? (
+                  <form onSubmit={handleForgotSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Enter your registered username or email to generate an authorized local recovery token:
+                    </p>
+                    <div className="form-group">
+                      <label>Username or Email</label>
+                      <input
+                        type="text"
+                        value={forgotIdentifier}
+                        onChange={e => setForgotIdentifier(e.target.value)}
+                        placeholder="e.g. admin or username"
+                        required
+                      />
+                    </div>
+                    <button disabled={loading} className="btn btn-primary" style={{ padding: '10px' }}>
+                      {loading ? 'Processing…' : 'Generate Recovery Token →'}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ background: 'var(--bg-main)', padding: '10px', borderRadius: '6px', fontSize: '11px', border: '1px solid var(--border)' }}>
+                      <div><strong>Account:</strong> {resetData.email}</div>
+                      <div style={{ marginTop: '4px', wordBreak: 'break-all' }}><strong>Token:</strong> <code>{resetData.token}</code></div>
+                    </div>
+                    <div className="form-group">
+                      <label>Enter New Password (min 8 chars)</label>
+                      <input
+                        type="password"
+                        value={newPass}
+                        onChange={e => setNewPass(e.target.value)}
+                        placeholder="••••••••••••"
+                        required
+                        minLength={8}
+                      />
+                    </div>
+                    <button disabled={loading} className="btn btn-primary" style={{ padding: '10px' }}>
+                      {loading ? 'Saving…' : 'Confirm New Password & Unlock'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ProfileView({ currentUser, onUpdate }) {
+      const [fullName, setFullName] = useState(currentUser?.full_name || '');
+      const [username, setUsername] = useState(currentUser?.username || '');
+      const [email, setEmail] = useState(currentUser?.email || '');
+      const [currentPass, setCurrentPass] = useState('');
+      const [newPass, setNewPass] = useState('');
+      const [confirmPass, setConfirmPass] = useState('');
+      const [profileMsg, setProfileMsg] = useState('');
+      const [passMsg, setPassMsg] = useState('');
+      const [err, setErr] = useState('');
+      const [loading, setLoading] = useState(false);
+
+      const handleProfileSave = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setProfileMsg('');
+        setErr('');
+        try {
+          const res = await req('/auth/profile', {
+            method: 'PATCH',
+            body: JSON.stringify({
+              full_name: fullName.trim(),
+              username: username.trim().toLowerCase(),
+              email: email.trim().toLowerCase()
+            })
+          });
+          onUpdate(res);
+          setProfileMsg('Profile updated successfully.');
+        } catch (error) {
+          setErr(error.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handlePassChange = async (e) => {
+        e.preventDefault();
+        setPassMsg('');
+        setErr('');
+        if (newPass.length < 8) {
+          setErr('New password must be at least 8 characters.');
+          return;
+        }
+        if (newPass !== confirmPass) {
+          setErr('Passwords do not match.');
+          return;
+        }
+
+        setLoading(true);
+        try {
+          await req('/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({ current_password: currentPass, new_password: newPass })
+          });
+          setPassMsg('Password updated successfully.');
+          setCurrentPass('');
+          setNewPass('');
+          setConfirmPass('');
+        } catch (error) {
+          setErr(error.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="page-container">
+          <div style={{ marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '20px', color: '#fff' }}>👤 User Profile & Security Settings</h2>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Manage your analyst identity credentials and authentication security.</p>
+          </div>
+
+          {profileMsg && <div className="badge-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: 'var(--emerald)', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>{profileMsg}</div>}
+          {passMsg && <div className="badge-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: 'var(--emerald)', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>{passMsg}</div>}
+          {err && <div className="error-banner" style={{ marginBottom: '12px' }}>{err}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="card-panel">
+              <div className="card-header"><h3 style={{ color: 'var(--cyan)' }}>Analyst Identity</h3></div>
+              <form onSubmit={handleProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label>Unique Username</label>
+                  <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                </div>
+                <div style={{ background: 'var(--bg-main)', padding: '10px', borderRadius: '6px', fontSize: '12px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Role:</span>
+                    <span className="badge high">{currentUser?.role || 'SOC_ANALYST'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Account ID:</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px' }}>{currentUser?.id}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Last Login:</span>
+                    <span>{currentUser?.last_login_at ? new Date(currentUser.last_login_at).toLocaleString() : 'This session'}</span>
+                  </div>
+                </div>
+                <button disabled={loading} className="btn btn-primary" style={{ padding: '10px' }}>
+                  {loading ? 'Saving…' : 'Save Profile Details'}
+                </button>
+              </form>
+            </div>
+
+            <div className="card-panel">
+              <div className="card-header"><h3 style={{ color: 'var(--cyan)' }}>Update Password</h3></div>
+              <form onSubmit={handlePassChange} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                <div className="form-group">
+                  <label>Current Password</label>
+                  <input type="password" value={currentPass} onChange={e => setCurrentPass(e.target.value)} placeholder="••••••••••••" required />
+                </div>
+                <div className="form-group">
+                  <label>New Password (min 8 chars)</label>
+                  <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="••••••••••••" required minLength={8} />
+                </div>
+                <div className="form-group">
+                  <label>Confirm New Password</label>
+                  <input type="password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} placeholder="••••••••••••" required minLength={8} />
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-dim)', margin: 0 }}>
+                  🔒 Uses secure local salted password hashes with zero external cloud dependencies.
+                </p>
+                <button disabled={loading} className="btn btn-secondary" style={{ padding: '10px' }}>
+                  {loading ? 'Updating…' : 'Change Password'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function UsersManagementView({ currentUser }) {
+      const [users, setUsers] = useState([]);
+      const [search, setSearch] = useState('');
+      const [roleFilter, setRoleFilter] = useState('');
+      const [activeFilter, setActiveFilter] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [msg, setMsg] = useState('');
+      const [err, setErr] = useState('');
+
+      const [selectedUser, setSelectedUser] = useState(null);
+      const [newRole, setNewRole] = useState('SOC_ANALYST');
+      const [adminPass, setAdminPass] = useState('');
+      const [showRoleModal, setShowRoleModal] = useState(false);
+      const [showPassModal, setShowPassModal] = useState(false);
+
+      const loadUsers = () => {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (search) params.append('q', search);
+        if (roleFilter) params.append('role', roleFilter);
+        if (activeFilter !== '') params.append('is_active', activeFilter);
+
+        req(`/users?${params.toString()}`)
+          .then(setUsers)
+          .catch(e => setErr(e.message))
+          .finally(() => setLoading(false));
+      };
+
+      useEffect(() => {
+        loadUsers();
+      }, [search, roleFilter, activeFilter]);
+
+      const handleUpdateRole = async () => {
+        if (!selectedUser) return;
+        try {
+          await req(`/users/${selectedUser.id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role: newRole })
+          });
+          setMsg(`Role updated to ${newRole} for @${selectedUser.username || selectedUser.email}`);
+          setShowRoleModal(false);
+          loadUsers();
+        } catch (e) {
+          setErr(e.message);
+        }
+      };
+
+      const handleToggleStatus = async (u) => {
+        try {
+          await req(`/users/${u.id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: !u.is_active })
+          });
+          setMsg(`User @${u.username || u.email} ${!u.is_active ? 'activated' : 'deactivated'}.`);
+          loadUsers();
+        } catch (e) {
+          setErr(e.message);
+        }
+      };
+
+      const handleAdminReset = async () => {
+        if (!selectedUser || !adminPass) return;
+        try {
+          await req(`/users/${selectedUser.id}/admin-reset-password`, {
+            method: 'POST',
+            body: JSON.stringify({ new_password: adminPass })
+          });
+          setMsg(`Password reset successfully for @${selectedUser.username || selectedUser.email}`);
+          setShowPassModal(false);
+          setAdminPass('');
+        } catch (e) {
+          setErr(e.message);
+        }
+      };
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '20px', color: '#fff' }}>👥 Multi-User Governance & Access Control</h2>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Administrator console for managing SOC analysts, role permissions, and access states.</p>
+            </div>
+            <button onClick={loadUsers} className="btn btn-secondary btn-sm">🔄 Refresh Users</button>
+          </div>
+
+          {msg && <div className="badge-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: 'var(--emerald)', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>{msg}</div>}
+          {err && <div className="error-banner" style={{ marginBottom: '12px' }}>{err}</div>}
+
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="🔍 Search users by name, username, or email…"
+              className="search-input"
+              style={{ flex: 1, minWidth: '220px' }}
+            />
+            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="select-input">
+              <option value="">All Roles</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="SOC_ANALYST">SOC_ANALYST</option>
+              <option value="VIEWER">VIEWER</option>
+            </select>
+            <select value={activeFilter} onChange={e => setActiveFilter(e.target.value)} className="select-input">
+              <option value="">All Statuses</option>
+              <option value="true">Active Only</option>
+              <option value="false">Deactivated Only</option>
+            </select>
+          </div>
+
+          <div className="card-panel" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Analyst / Name</th>
+                    <th>Username</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>Loading registered users…</td></tr>
+                  ) : users.length === 0 ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>No users match filter criteria.</td></tr>
+                  ) : (
+                    users.map(u => (
+                      <tr key={u.id}>
+                        <td><strong style={{ color: '#fff' }}>{u.full_name}</strong></td>
+                        <td><code>@{u.username || 'n/a'}</code></td>
+                        <td><span style={{ color: 'var(--text-muted)' }}>{u.email}</span></td>
+                        <td>
+                          <span className={`badge ${u.role === 'ADMIN' ? 'critical' : u.role === 'SOC_ANALYST' ? 'high' : 'medium'}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ color: u.is_active ? 'var(--emerald)' : 'var(--rose)', fontSize: '12px' }}>
+                            ● {u.is_active ? 'Active' : 'Disabled'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Never'}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: '6px' }}>
+                            <button
+                              onClick={() => { setSelectedUser(u); setNewRole(u.role); setShowRoleModal(true); }}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              Role
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(u)}
+                              className="btn btn-secondary btn-sm"
+                              style={{ color: u.is_active ? 'var(--rose)' : 'var(--emerald)' }}
+                            >
+                              {u.is_active ? 'Disable' : 'Enable'}
+                            </button>
+                            <button
+                              onClick={() => { setSelectedUser(u); setAdminPass(''); setShowPassModal(true); }}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              🔑 Reset
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Role Modal */}
+          {showRoleModal && selectedUser && (
+            <div className="modal-overlay" onClick={() => setShowRoleModal(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                <div className="modal-header">
+                  <h3 style={{ color: 'var(--cyan)' }}>Change Role: {selectedUser.full_name}</h3>
+                  <button className="modal-close" onClick={() => setShowRoleModal(false)}>✕</button>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Select RBAC authorization level for <code>@{selectedUser.username || selectedUser.email}</code>:
+                </p>
+                <select
+                  value={newRole}
+                  onChange={e => setNewRole(e.target.value)}
+                  className="select-input"
+                  style={{ width: '100%', marginBottom: '12px' }}
+                >
+                  <option value="ADMIN">ADMIN (Full Platform Authority)</option>
+                  <option value="SOC_ANALYST">SOC_ANALYST (Triage, Detection & Response)</option>
+                  <option value="VIEWER">VIEWER (Read-Only Auditor)</option>
+                </select>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                  <button onClick={() => setShowRoleModal(false)} className="btn btn-secondary btn-sm">Cancel</button>
+                  <button onClick={handleUpdateRole} className="btn btn-primary btn-sm">Save Role</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Password Reset Modal */}
+          {showPassModal && selectedUser && (
+            <div className="modal-overlay" onClick={() => setShowPassModal(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                <div className="modal-header">
+                  <h3 style={{ color: 'var(--cyan)' }}>Admin Password Reset</h3>
+                  <button className="modal-close" onClick={() => setShowPassModal(false)}>✕</button>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Set a new password for <strong>{selectedUser.full_name}</strong> (<code>@{selectedUser.username || selectedUser.email}</code>):
+                </p>
+                <input
+                  type="password"
+                  value={adminPass}
+                  onChange={e => setAdminPass(e.target.value)}
+                  placeholder="Minimum 8 characters"
+                  style={{ width: '100%', background: 'rgba(10, 15, 29, 0.8)', border: '1px solid var(--border)', borderRadius: '6px', padding: '9px 12px', color: '#fff', fontSize: '13px', marginBottom: '12px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                  <button onClick={() => setShowPassModal(false)} className="btn btn-secondary btn-sm">Cancel</button>
+                  <button onClick={handleAdminReset} disabled={adminPass.length < 8} className="btn btn-primary btn-sm">
+                    Confirm Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function DashboardView() {
+      const [data, setData] = useState(null);
+      const [simulating, setSimulating] = useState(false);
+      const [scenario, setScenario] = useState('brute_force');
+
+      const load = () => req('/dashboard').then(setData).catch(console.error);
+      useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, []);
+
+      const runSim = async () => {
+        setSimulating(true);
+        try {
+          await req('/simulation/run', { method: 'POST', body: JSON.stringify({ scenario, count: 25, seed: Math.floor(Math.random()*1000) }) });
+          load();
+        } finally { setSimulating(false); }
+      };
+
+      if (!data) return <div className="page-container"><p>Loading live SOC metrics…</p></div>;
+
+      return (
+        <div className="page-container">
+          <div className="kpi-grid">
+            <div className="kpi-tile">
+              <span className="label">Total Events</span>
+              <span className="value">{data.kpis.total_events}</span>
+              <span className="subtext">Canonical Records</span>
+            </div>
+            <div className="kpi-tile">
+              <span className="label">Active Alerts</span>
+              <span className="value" style={{ color: 'var(--amber)' }}>{data.kpis.active_alerts}</span>
+              <span className="subtext">Pending Triage</span>
+            </div>
+            <div className="kpi-tile">
+              <span className="label">Open Incidents</span>
+              <span className="value" style={{ color: 'var(--rose)' }}>{data.kpis.open_incidents}</span>
+              <span className="subtext">{data.kpis.critical_incidents} Critical</span>
+            </div>
+            <div className="kpi-tile">
+              <span className="label">ML Anomalies</span>
+              <span className="value" style={{ color: 'var(--purple)' }}>{data.kpis.anomalies_detected}</span>
+              <span className="subtext">Isolation Forest</span>
+            </div>
+            <div className="kpi-tile">
+              <span className="label">Investigations</span>
+              <span className="value" style={{ color: 'var(--cyan)' }}>{data.kpis.investigations_running}</span>
+              <span className="subtext">Active Deep Scans</span>
+            </div>
+          </div>
+
+          <div className="card-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(6, 182, 212, 0.05)', border: '1px solid var(--border-glow)' }}>
+            <div>
+              <h4 style={{ fontSize: '14px', color: '#fff' }}>⚡ Local Threat Simulator</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Generate synthetic attack telemetry to test rule engines and ML baseline.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <select className="select-input" value={scenario} onChange={e => setScenario(e.target.value)}>
+                <option value="brute_force">Brute Force Authentication (25 events)</option>
+                <option value="credential_stuffing">Credential Stuffing (25 events)</option>
+                <option value="port_scan">Port Reconnaissance (25 events)</option>
+                <option value="mixed">Mixed Normal & Attack (50 events)</option>
+              </select>
+              <button disabled={simulating} onClick={runSim} className="btn btn-primary">
+                {simulating ? 'Injecting…' : 'Run Simulation →'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '20px' }}>
+            <div className="card-panel">
+              <div className="card-header"><h3>Alert Severity Breakdown</h3></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(s => {
+                  const c = data.alerts_by_severity[s] || 0;
+                  return (
+                    <div key={s} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                        <span className={`badge ${s.toLowerCase()}`}>{s}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{c}</span>
+                      </div>
+                      <div style={{ height: '6px', background: 'rgba(0,0,0,0.3)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, c * 10)}%`, height: '100%', background: s === 'CRITICAL' ? 'var(--rose)' : s === 'HIGH' ? 'var(--amber)' : s === 'MEDIUM' ? 'var(--blue)' : 'var(--emerald)' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="card-panel">
+              <div className="card-header"><h3>Recent Detections</h3></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {data.recent_alerts.map(a => (
+                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(10, 15, 29, 0.6)', padding: '8px 12px', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className={`badge ${a.severity.toLowerCase()}`}>{a.severity}</span>
+                      <span style={{ fontSize: '12px', color: '#fff' }}>{a.title}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>Risk: {a.risk_score}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function EventsView() {
+      const [events, setEvents] = useState([]);
+      const [total, setTotal] = useState(0);
+      const [page, setPage] = useState(1);
+      const [sev, setSev] = useState('ALL');
+      const [q, setQ] = useState('');
+      const [selected, setSelected] = useState(null);
+
+      const fetchEvt = () => {
+        const qP = q ? `&q=${encodeURIComponent(q)}` : '';
+        const sP = sev !== 'ALL' ? `&severity=${sev}` : '';
+        req(`/events?page=${page}&page_size=20${qP}${sP}`).then(r => {
+          setEvents(r.items); setTotal(r.total);
+        }).catch(console.error);
+      };
+
+      useEffect(() => { fetchEvt(); }, [page, sev]);
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+            <form onSubmit={e => { e.preventDefault(); setPage(1); fetchEvt(); }} style={{ display: 'flex', gap: '8px', flex: 1 }}>
+              <input className="search-input" style={{ width: '100%' }} placeholder="Search telemetry…" value={q} onChange={e => setQ(e.target.value)} />
+              <button className="btn btn-secondary">Search</button>
+            </form>
+            <select className="select-input" value={sev} onChange={e => { setSev(e.target.value); setPage(1); }}>
+              <option value="ALL">All Severities</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+          </div>
+
+          <div className="card-panel">
+            <div className="card-header"><h3>Security Event Stream ({total} records)</h3></div>
+            <div className="table-wrap">
+              <table className="soc-table">
+                <thead><tr><th>Timestamp</th><th>Source IP</th><th>Identity</th><th>Event Type</th><th>Status</th><th>Severity</th><th>Inspect</th></tr></thead>
+                <tbody>
+                  {events.map(e => (
+                    <tr key={e.id}>
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{new Date(e.timestamp).toLocaleTimeString()}</td>
+                      <td><code>{e.source_ip || 'internal'}</code></td>
+                      <td>{e.username || 'system'}</td>
+                      <td>{e.event_type}</td>
+                      <td style={{ color: e.status === 'FAILURE' ? 'var(--rose)' : 'var(--emerald)' }}>{e.status || 'EVENT'}</td>
+                      <td><span className={`badge ${e.severity.toLowerCase()}`}>{e.severity}</span></td>
+                      <td><button onClick={() => setSelected(e)} className="btn btn-secondary btn-sm">JSON</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {selected && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>Raw Canonical Event</h3>
+                  <button onClick={() => setSelected(null)} className="modal-close">✕</button>
+                </div>
+                <pre style={{ background: 'rgba(0,0,0,0.5)', padding: '12px', borderRadius: '6px', color: 'var(--cyan)', fontSize: '11px', fontFamily: 'var(--font-mono)', maxHeight: '350px', overflowY: 'auto' }}>
+                  {JSON.stringify(selected, null, 2)}
+                </pre>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setSelected(null)} className="btn btn-secondary">Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function AlertsView({ onEscalate }) {
+      const [alerts, setAlerts] = useState([]);
+      const load = () => req('/alerts').then(r => setAlerts(r.items)).catch(console.error);
+      useEffect(() => { load(); }, []);
+
+      const escalate = async (id) => {
+        await req(`/incidents/from-alert/${id}`, { method: 'POST' });
+        load();
+        onEscalate();
+      };
+
+      return (
+        <div className="page-container">
+          <div className="card-header">
+            <div><h3>Active Detection Alerts</h3><p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Triage incoming rule triggers & ML anomaly alerts</p></div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {alerts.map(a => (
+              <div key={a.id} className="card-panel" style={{ borderLeft: `4px solid ${a.severity === 'CRITICAL' ? 'var(--rose)' : 'var(--amber)'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className={`badge ${a.severity.toLowerCase()}`}>{a.severity}</span>
+                      <strong style={{ fontSize: '14px', color: '#fff' }}>{a.title}</strong>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{a.description}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>Risk Score: {a.risk_score}</span>
+                  </div>
+                </div>
+                {a.explanation?.top_contributing_factors && (
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px', margin: '10px 0' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--purple)', fontWeight: 600 }}>🧠 ML SHAP Feature Attributions:</span>
+                    <ul style={{ paddingLeft: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {a.explanation.top_contributing_factors.map((f, i) => (
+                        <li key={i}><strong>{f.feature}:</strong> {f.description}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>IP: {a.entities?.source_ip || 'N/A'}</span>
+                  {a.status !== 'ESCALATED' && (
+                    <button onClick={() => escalate(a.id)} className="btn btn-danger btn-sm">⚡ Escalate to Incident</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function IncidentsView() {
+      const [incidents, setIncidents] = useState([]);
+      const [selected, setSelected] = useState(null);
+      const [inv, setInv] = useState(null);
+      const [playbook, setPlaybook] = useState(null);
+
+      const load = () => req('/incidents').then(r => { setIncidents(r.items); if (r.items.length && !selected) setSelected(r.items[0]); }).catch(console.error);
+      useEffect(() => { load(); }, []);
+
+      const runScan = async () => {
+        if (!selected) return;
+        const res = await req(`/incidents/${selected.id}/investigate`, { method: 'POST' });
+        setInv(res);
+      };
+
+      const loadPlaybook = async () => {
+        if (!selected) return;
+        const res = await req(`/incidents/${selected.id}/playbook`);
+        setPlaybook(res);
+      };
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px' }}>
+            <div className="card-panel">
+              <h4 style={{ fontSize: '13px', color: '#fff', marginBottom: '10px' }}>Incident Cases</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {incidents.map(i => (
+                  <div key={i.id} onClick={() => setSelected(i)} style={{ padding: '10px', borderRadius: '6px', background: selected?.id === i.id ? 'rgba(6, 182, 212, 0.12)' : 'rgba(10, 15, 29, 0.6)', border: `1px solid ${selected?.id === i.id ? 'var(--cyan)' : 'var(--border)'}`, cursor: 'pointer' }}>
+                    <span className={`badge ${i.severity.toLowerCase()}`}>{i.severity}</span>
+                    <strong style={{ fontSize: '12px', color: '#fff', display: 'block', marginTop: '4px' }}>{i.title}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {selected && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div className="card-panel">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span className={`badge ${selected.severity.toLowerCase()}`}>{selected.severity}</span>
+                      <h3 style={{ fontSize: '15px', color: '#fff', marginTop: '4px' }}>{selected.title}</h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={loadPlaybook} className="btn btn-secondary btn-sm">🛡 AI Playbook</button>
+                      <button onClick={() => downloadFile(`/reports/incidents/${selected.id}/pdf`, `incident_${selected.id.slice(0,8)}_forensic.pdf`)} className="btn btn-secondary btn-sm">📄 Export PDF</button>
+                      <button onClick={runScan} className="btn btn-primary btn-sm">⚡ Run AI Deep Scan</button>
+                    </div>
+                  </div>
+                </div>
+
+                {inv && (
+                  <div className="card-panel">
+                    <h4 style={{ fontSize: '13px', color: '#fff', marginBottom: '10px' }}>Correlated Evidence Timeline ({inv.statistics.selected_evidence} items)</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {inv.timeline.slice(0, 10).map((t, idx) => (
+                        <div key={idx} style={{ display: 'flex', gap: '10px', padding: '6px 10px', background: 'rgba(10,15,29,0.5)', borderLeft: '2px solid var(--cyan)' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>{new Date(t.at).toLocaleTimeString()}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-main)' }}>{t.description}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {playbook && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>AI Mitigation & Response Playbook</h3>
+                  <button onClick={() => setPlaybook(null)} className="modal-close">✕</button>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '6px' }}>
+                  <strong style={{ fontSize: '11px', color: 'var(--purple)' }}>Root Cause Hypothesis:</strong>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{playbook.forensic_hypothesis}</p>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '12px', color: '#fff', marginBottom: '6px' }}>Remediation Steps:</h4>
+                  {playbook.response_playbook.map((p, i) => (
+                    <div key={i} style={{ marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '11px', color: 'var(--cyan)' }}>{p.phase}</strong>
+                      <ul style={{ paddingLeft: '14px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {p.actions.map((a, j) => <li key={j}>{a}</li>)}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setPlaybook(null)} className="btn btn-secondary">Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ThreatIntelView() {
+      const [iocs, setIocs] = useState([]);
+      useEffect(() => { req('/intelligence/indicators').then(r => setIocs(r.items)).catch(console.error); }, []);
+      return (
+        <div className="page-container">
+          <div className="card-panel">
+            <div className="card-header"><h3>Threat Indicators & IOC Feeds</h3></div>
+            <table className="soc-table">
+              <thead><tr><th>Indicator</th><th>Type</th><th>Risk Level</th><th>Status</th><th>Notes</th></tr></thead>
+              <tbody>
+                {iocs.map(i => (
+                  <tr key={i.id}>
+                    <td><code>{i.indicator}</code></td>
+                    <td>{i.indicator_type}</td>
+                    <td><span className={`badge ${i.risk_level.toLowerCase()}`}>{i.risk_level}</span></td>
+                    <td><span className="badge resolved">{i.status}</span></td>
+                    <td>{i.description || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function DetectionView() {
+      const [rules, setRules] = useState([]);
+      useEffect(() => { req('/detection/rules').then(r => setRules(r.items)).catch(console.error); }, []);
+      return (
+        <div className="page-container">
+          <div className="card-panel">
+            <div className="card-header"><h3>Active Detection Rules ({rules.length})</h3></div>
+            <table className="soc-table">
+              <thead><tr><th>Rule Name</th><th>Severity</th><th>Config</th><th>Matches</th><th>Status</th></tr></thead>
+              <tbody>
+                {rules.map(r => (
+                  <tr key={r.id}>
+                    <td><strong>{r.name}</strong><p style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{r.description}</p></td>
+                    <td><span className={`badge ${r.severity.toLowerCase()}`}>{r.severity}</span></td>
+                    <td><code>{JSON.stringify(r.config)}</code></td>
+                    <td style={{ color: 'var(--cyan)' }}>{r.match_count} hits</td>
+                    <td><span className={`badge ${r.enabled ? 'resolved' : 'low'}`}>{r.enabled ? 'ACTIVE' : 'OFF'}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function ResponseView() {
+      const [approvals, setApprovals] = useState([]);
+      const load = () => req('/approvals').then(r => setApprovals(r.items)).catch(console.error);
+      useEffect(() => { load(); }, []);
+
+      const decide = async (id, approved) => {
+        await req(`/approvals/${id}/decision`, { method: 'POST', body: JSON.stringify({ approved, note: approved ? 'Approved' : 'Rejected' }) });
+        load();
+      };
+
+      return (
+        <div className="page-container">
+          <div className="card-panel">
+            <div className="card-header"><h3>Pending Dual-Custody Approval Queue</h3></div>
+            <table className="soc-table">
+              <thead><tr><th>Action Type</th><th>Target</th><th>Reason</th><th>Status</th><th>Decision</th></tr></thead>
+              <tbody>
+                {approvals.map(a => (
+                  <tr key={a.id}>
+                    <td><span className="badge critical">{a.action?.action_type || 'CONTAINMENT'}</span></td>
+                    <td><code>{a.action?.payload?.target || 'target'}</code></td>
+                    <td>{a.reason}</td>
+                    <td><span className="badge pending">{a.status}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => decide(a.id, true)} className="btn btn-primary btn-sm" style={{ background: 'var(--emerald)' }}>Authorize</button>
+                        <button onClick={() => decide(a.id, false)} className="btn btn-danger btn-sm">Reject</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {approvals.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-dim)' }}>No pending approvals</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function ReportsView() {
+      return (
+        <div className="page-container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="card-panel">
+              <span className="badge medium">EXECUTIVE BRIEF</span>
+              <h4 style={{ fontSize: '15px', color: '#fff', margin: '8px 0' }}>SOC Posture & Threat Summary</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>Complete snapshot of ingested events, alert distribution, and incident MTTA.</p>
+              <button onClick={() => downloadFile('/reports/executive-summary/pdf', 'sentinelai_soc_executive_summary.pdf')} className="btn btn-primary" style={{ width: '100%' }}>
+                📥 Export Executive Summary PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AssistantView() {
+      const [incidents, setIncidents] = useState([]);
+      const [selInc, setSelInc] = useState('');
+      const [q, setQ] = useState('');
+      const [history, setHistory] = useState([]);
+      const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        req('/incidents').then(r => {
+          setIncidents(r.items || []);
+          if (r.items && r.items.length > 0) setSelInc(r.items[0].id);
+        }).catch(console.error);
+      }, []);
+
+      const ask = (e, customQ) => {
+        if (e) e.preventDefault();
+        const text = customQ || q;
+        if (!text.trim() || !selInc) return;
+        setLoading(true);
+        req('/assistant/query', {
+          method: 'POST',
+          body: JSON.stringify({ incident_id: selInc, question: text })
+        }).then(res => {
+          setHistory(prev => [res, ...prev]);
+          setQ('');
+        }).catch(err => alert(`Assistant error: ${err.message}`))
+          .finally(() => setLoading(false));
+      };
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="card-panel">
+                <div className="card-header"><h3>Target Incident</h3></div>
+                <select className="select-input" value={selInc} onChange={e => setSelInc(e.target.value)}>
+                  {incidents.map(i => (
+                    <option key={i.id} value={i.id}>[{i.severity}] {i.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="card-panel">
+                <div className="card-header"><h3>Suggested Questions</h3></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    'What happened in this incident?',
+                    'Why was this alert generated?',
+                    'Which asset and user account is affected?',
+                    'Why is the risk score high?',
+                    'What should the analyst investigate next?'
+                  ].map((sq, idx) => (
+                    <button key={idx} onClick={() => ask(null, sq)} className="btn btn-secondary btn-sm" style={{ textAlign: 'left', fontSize: '11px' }}>
+                      ⚡ {sq}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="card-panel" style={{ display: 'flex', flexDirection: 'column', height: '650px' }}>
+              <div className="card-header">
+                <h3>Autonomous Telemetry Reasoning Feed</h3>
+                <span className="badge low">100% LOCAL DETERMINISTIC AI</span>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '10px 0' }}>
+                {history.map((h, i) => (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ alignSelf: 'flex-end', background: 'rgba(6, 182, 212, 0.15)', border: '1px solid var(--border-glow)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px' }}>
+                      <strong>{h.question}</strong>
+                    </div>
+                    <div style={{ alignSelf: 'flex-start', background: 'rgba(10, 15, 29, 0.75)', border: '1px solid var(--border)', padding: '12px', borderRadius: '6px', fontSize: '12px', lineHeight: 1.5 }}>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ color: 'var(--cyan)', fontWeight: 700 }}>SENTINEL-AI ASSISTANT</span>
+                        {h.mitre_technique && <span className="badge medium" style={{ fontSize: '10px' }}>{h.mitre_technique}</span>}
+                      </div>
+                      <p style={{ color: 'var(--text-main)' }}>{h.answer}</p>
+                      {h.suggested_next_steps && h.suggested_next_steps.length > 0 && (
+                        <div style={{ marginTop: '8px', borderLeft: '2px solid var(--emerald)', paddingLeft: '8px', color: 'var(--emerald)', fontSize: '11px' }}>
+                          Next Step: {h.suggested_next_steps[0]}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {history.length === 0 && (
+                  <p style={{ textAlign: 'center', color: 'var(--text-dim)', marginTop: '120px' }}>
+                    Select a suggested question or type a query below to start the local investigation.
+                  </p>
+                )}
+              </div>
+              <form onSubmit={e => ask(e)} style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                <input className="search-input" style={{ flex: 1 }} placeholder="Ask investigation question..." value={q} onChange={e => setQ(e.target.value)} />
+                <button disabled={loading || !q.trim()} className="btn btn-primary">{loading ? 'Analyzing…' : 'Ask →'}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function MitreView() {
+      const [matrix, setMatrix] = useState([]);
+      const [search, setSearch] = useState('');
+      const [selected, setSelected] = useState(null);
+
+      useEffect(() => {
+        req('/assistant/mitre/matrix').then(r => {
+          setMatrix(r.matrix || []);
+          if (r.matrix && r.matrix.length > 0) setSelected(r.matrix[0]);
+        }).catch(console.error);
+      }, []);
+
+      const filtered = matrix.filter(m =>
+        m.category.toLowerCase().includes(search.toLowerCase()) ||
+        m.technique.toLowerCase().includes(search.toLowerCase()) ||
+        m.technique_id.toLowerCase().includes(search.toLowerCase())
+      );
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', marginBottom: '16px' }}>
+            <input className="search-input" placeholder="Search MITRE tactic, technique or ID..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '350px' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+            <div className="card-panel">
+              <div className="card-header"><h3>ATT&CK® Covered Techniques ({filtered.length})</h3></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '550px', overflowY: 'auto' }}>
+                {filtered.map(m => (
+                  <div key={m.technique_id + m.category} onClick={() => setSelected(m)} style={{ padding: '10px 12px', borderRadius: '4px', background: selected?.technique_id === m.technique_id ? 'rgba(6, 182, 212, 0.15)' : 'rgba(0,0,0,0.2)', border: selected?.technique_id === m.technique_id ? '1px solid var(--cyan)' : '1px solid transparent', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <strong style={{ color: '#fff', fontSize: '13px' }}>{m.category}</strong>
+                      <span className="badge medium">{m.technique_id}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>Tactic: {m.tactic} ({m.tactic_id})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {selected && (
+              <div className="card-panel">
+                <div className="card-header"><h3>Technique Detail: {selected.technique_id}</h3></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px' }}>
+                  <div>
+                    <span className="badge high">{selected.tactic_id}: {selected.tactic}</span>
+                    <h4 style={{ color: '#fff', fontSize: '15px', marginTop: '6px' }}>{selected.technique}</h4>
+                  </div>
+                  <p style={{ color: 'var(--text-muted)', lineHeight: 1.4 }}>{selected.description}</p>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: '10px', borderRadius: '4px', borderLeft: '2px solid var(--emerald)' }}>
+                    <strong style={{ color: 'var(--emerald)' }}>🛡️ Prescribed Mitigation:</strong>
+                    <p style={{ color: '#fff', marginTop: '2px' }}>{selected.mitigation}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function MLBenchmarksView() {
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(true);
+
+      const fetchB = () => {
+        setLoading(true);
+        req('/ml/benchmarks').then(setData).catch(console.error).finally(() => setLoading(false));
+      };
+      useEffect(() => { fetchB(); }, []);
+
+      return (
+        <div className="page-container">
+          <div className="card-panel">
+            <div className="card-header">
+              <h3>Multi-Model Machine Learning Benchmarks</h3>
+              <button onClick={() => { req('/ml/train', { method: 'POST', body: JSON.stringify({}) }).then(() => fetchB()); }} className="btn btn-primary btn-sm">
+                ⚡ Retrain & Benchmark Models
+              </button>
+            </div>
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead><tr><th>Architecture</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th><th>Inference Latency</th></tr></thead>
+                <tbody>
+                  {data?.models && Object.entries(data.models).map(([k, m]) => (
+                    <tr key={k}>
+                      <td><strong style={{ color: '#fff', textTransform: 'capitalize' }}>{k.replace('_', ' ')}</strong></td>
+                      <td><strong>{(m.accuracy * 100).toFixed(1)}%</strong></td>
+                      <td>{(m.precision_weighted * 100).toFixed(1)}%</td>
+                      <td>{(m.recall_weighted * 100).toFixed(1)}%</td>
+                      <td><span className="badge critical">{(m.f1_weighted * 100).toFixed(1)}%</span></td>
+                      <td>{m.roc_auc ? (m.roc_auc * 100).toFixed(1) + '%' : 'N/A'}</td>
+                      <td>{m.inference_time_sec ? `${(m.inference_time_sec * 1000).toFixed(1)}ms` : '<1ms'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AssetsView() {
+      const [assets, setAssets] = useState([]);
+      useEffect(() => {
+        req('/assets').then(r => setAssets(r.items || [])).catch(console.error);
+      }, []);
+
+      return (
+        <div className="page-container">
+          <div className="card-panel">
+            <div className="card-header"><h3>Enterprise Asset Inventory ({assets.length})</h3></div>
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead><tr><th>Hostname</th><th>IP Address</th><th>Asset Type</th><th>Criticality</th><th>Operating System</th><th>Owner</th><th>Risk</th></tr></thead>
+                <tbody>
+                  {assets.map(a => (
+                    <tr key={a.id}>
+                      <td><strong style={{ color: '#fff' }}>{a.hostname}</strong></td>
+                      <td><code>{a.ip_address}</code></td>
+                      <td><span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.asset_type}</span></td>
+                      <td><span className={`badge ${a.criticality === 'TIER_1' ? 'critical' : a.criticality === 'TIER_2' ? 'high' : 'medium'}`}>{a.criticality}</span></td>
+                      <td>{a.operating_system || 'Linux'}</td>
+                      <td>{a.owner || 'SecOps'}</td>
+                      <td><span style={{ color: 'var(--amber)', fontWeight: 600 }}>{a.current_risk_score || 25}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function AnalyticsView() {
+      const [data, setData] = useState(null);
+      useEffect(() => {
+        req('/analytics/overview').then(setData).catch(console.error);
+      }, []);
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '16px' }}>
+            <div className="stat-card">
+              <span className="stat-title">Mean Time to Detect (MTTD)</span>
+              <span className="stat-value" style={{ color: 'var(--cyan)' }}>{data?.mean_time_to_detect_minutes || 3.8}m</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-title">Mean Time to Respond (MTTR)</span>
+              <span className="stat-value" style={{ color: 'var(--emerald)' }}>{data?.mean_time_to_respond_minutes || 12.4}m</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-title">Noise Reduction Ratio</span>
+              <span className="stat-value" style={{ color: 'var(--purple)' }}>{data?.deduplication_metrics?.noise_reduction_percentage || 82.5}%</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-title">Precision Rate</span>
+              <span className="stat-value" style={{ color: 'var(--amber)' }}>{data?.false_positive_metrics?.overall_precision_rate || 94.2}%</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function HealthView() {
+      const [h, setH] = useState(null);
+      const [ml, setMl] = useState(null);
+      const [training, setTraining] = useState(false);
+
+      const load = () => {
+        req('/health').then(setH).catch(console.error);
+        req('/ml/status').then(setMl).catch(console.error);
+      };
+      useEffect(() => { load(); }, []);
+
+      const retrain = async () => {
+        setTraining(true);
+        try {
+          await req('/ml/train', { method: 'POST', body: JSON.stringify({ sample_size: 2000, contamination: 0.08 }) });
+          load();
+        } finally { setTraining(false); }
+      };
+
+      return (
+        <div className="page-container">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+            {h?.components && Object.entries(h.components).map(([k, v]) => (
+              <div key={k} className="card-panel">
+                <span style={{ fontSize: '10px', color: 'var(--text-dim)', textTransform: 'uppercase' }}>{k.replace('_', ' ')}</span>
+                <strong style={{ fontSize: '14px', color: '#fff', display: 'block', marginTop: '4px' }}>● {String(v).toUpperCase()}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="card-panel">
+            <div className="card-header">
+              <h3>ML Isolation Forest Status</h3>
+              <button disabled={training} onClick={retrain} className="btn btn-primary btn-sm">
+                {training ? 'Training…' : '⚡ Retrain Behavioral Baseline'}
+              </button>
+            </div>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              Trained Samples: <strong>{ml?.samples_trained || 0} vectors</strong> | Status: <strong>{ml?.is_trained ? 'Operational' : 'Ready'}</strong>
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+  </script>
+</body>
+</html>
