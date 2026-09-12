@@ -138,3 +138,5 @@
 # Feature 80: kerberos-msg-decoder
 
 # Feature 81: tls-ja4-fingerprints
+
+# Feature 82: dns-dga-shannon-entropy
