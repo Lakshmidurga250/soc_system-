@@ -86,3 +86,5 @@
 # Feature 54: forensics-evtx-tamper
 
 # Feature 55: forensics-prefetch-pf
+
+# Feature 56: forensics-shimcache
