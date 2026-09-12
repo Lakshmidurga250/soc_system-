@@ -102,3 +102,5 @@
 # Feature 62: ueba-egress-tracker
 
 # Feature 63: ueba-impossible-travel
+
+# Feature 64: itdr-kerberoasting
