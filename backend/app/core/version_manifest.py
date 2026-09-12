@@ -158,3 +158,5 @@
 # Feature 90: yara-malware-massive
 
 # Feature 91: snort-ids-massive
+
+# Feature 92: ui-theme-lavender
