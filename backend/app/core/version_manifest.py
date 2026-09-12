@@ -108,3 +108,5 @@
 # Feature 65: itdr-dcsync-drsuapi
 
 # Feature 66: itdr-pass-spraying
+
+# Feature 67: itdr-asrep-roasting
