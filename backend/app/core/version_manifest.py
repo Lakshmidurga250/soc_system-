@@ -136,3 +136,5 @@
 # Feature 79: smb-v3-decoder
 
 # Feature 80: kerberos-msg-decoder
+
+# Feature 81: tls-ja4-fingerprints
