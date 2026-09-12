@@ -52,3 +52,5 @@
 # Feature 37: correlation-engine
 
 # Feature 38: incident-dossier-pdf
+
+# Feature 39: ciso-executive-summary
