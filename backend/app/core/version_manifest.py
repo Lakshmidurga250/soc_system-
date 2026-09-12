@@ -116,3 +116,5 @@
 # Feature 69: asset-exposure-matrix
 
 # Feature 70: threat-hunt-spl
+
+# Feature 71: threat-hunt-eql
