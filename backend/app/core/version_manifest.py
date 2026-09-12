@@ -120,3 +120,5 @@
 # Feature 71: threat-hunt-eql
 
 # Feature 72: threat-hunt-kql
+
+# Feature 73: threat-hunt-sigma
