@@ -39,9 +39,11 @@ from ...engines.itdr_engine import itdr_engine
 from ...services.vulnerability_engine import vulnerability_engine, AttackVector, AttackComplexity, PrivilegesRequired, UserInteraction, Scope, CIAImpact
 from ...services.threat_hunting import hunting_repository, HuntQueryLanguage
 from ...services.adversary_emulation import adversary_emulator
+from ...services.local_soc_assistant import LocalSOCAssistantEngine
+from ...services.telemetry_generator import TelemetryGenerator
 
-
-
+local_assistant = LocalSOCAssistantEngine()
+telemetry_gen = TelemetryGenerator()
 
 router = APIRouter(prefix="/advanced", tags=["Advanced SOC Engines"])
 
@@ -759,4 +761,58 @@ def run_adversary_emulations(current_user: User = Depends(current_user)):
     return adversary_emulator.run_all_emulations()
 
 
+# ----------------------------------------------------------------------
+# 21. Local SOC Assistant Endpoints (Offline AI Intelligence)
+# ----------------------------------------------------------------------
+class AssistantChatRequest(BaseModel):
+    query: str = Field(..., json_schema_extra={"example": "Summarize incident INC-2026-001 and explain risk factors"})
 
+
+@router.post("/assistant/query")
+def query_local_assistant(
+    req: AssistantChatRequest,
+    current_user: User = Depends(current_user),
+):
+    """Processes natural language SOC queries using deterministic local intelligence and rule engines."""
+    resp = local_assistant.generate_response(req.query)
+    return {
+        "query": resp.query,
+        "intent": resp.intent,
+        "confidence": resp.confidence,
+        "headline": resp.headline,
+        "markdown_content": resp.markdown_content,
+        "structured_data": resp.structured_data,
+        "suggested_actions": resp.suggested_actions,
+        "mitre_references": resp.mitre_references,
+        "timestamp": resp.timestamp,
+    }
+
+
+# ----------------------------------------------------------------------
+# 22. Multi-Source Synthetic Telemetry Generator Endpoints
+# ----------------------------------------------------------------------
+class TelemetryGenerateRequest(BaseModel):
+    count: Optional[int] = Field(50, ge=1, le=500)
+    include_attacks: Optional[bool] = True
+
+
+@router.post("/telemetry/generate")
+def generate_synthetic_telemetry(
+    req: TelemetryGenerateRequest,
+    current_user: User = Depends(current_user),
+):
+    """Generates enterprise multi-source security events (Sysmon, Windows EVTX, Zeek, Suricata)."""
+    events = telemetry_gen.generate_telemetry_batch(
+        count=req.count or 50,
+        include_attacks=req.include_attacks if req.include_attacks is not None else True
+    )
+    return {
+        "total_generated": len(events),
+        "events": events,
+        "source_breakdown": {
+            "sysmon": sum(1 for e in events if e.get("source_type") == "SYSMON_EVTX"),
+            "windows_security": sum(1 for e in events if e.get("source_type") == "WINDOWS_SECURITY_EVTX"),
+            "zeek_dns": sum(1 for e in events if e.get("source_type") == "ZEEK_DNS"),
+            "suricata_eve": sum(1 for e in events if e.get("source_type") == "SURICATA_EVE_JSON"),
+        }
+    }
