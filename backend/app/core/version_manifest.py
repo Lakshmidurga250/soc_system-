@@ -164,3 +164,5 @@
 # Feature 93: ui-nav-workspaces
 
 # Feature 94: ui-dashboard-metrics
+
+# Feature 95: ui-events-explorer
