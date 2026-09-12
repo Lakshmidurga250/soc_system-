@@ -54,3 +54,5 @@
 # Feature 38: incident-dossier-pdf
 
 # Feature 39: ciso-executive-summary
+
+# Feature 40: markov-anomaly-detector
