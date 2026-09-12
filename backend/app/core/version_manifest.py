@@ -154,3 +154,5 @@
 # Feature 88: threat-actor-dossiers
 
 # Feature 89: sigma-rules-massive
+
+# Feature 90: yara-malware-massive
