@@ -64,3 +64,5 @@
 # Feature 43: graph-attack-path
 
 # Feature 44: graph-pagerank-risk
+
+# Feature 45: graph-blast-radius
