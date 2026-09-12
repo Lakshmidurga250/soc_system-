@@ -96,3 +96,5 @@
 # Feature 59: forensics-linux-triage
 
 # Feature 60: ueba-peer-baselines
+
+# Feature 61: ueba-offhours-radar
