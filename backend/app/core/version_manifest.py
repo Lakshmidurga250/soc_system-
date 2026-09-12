@@ -128,3 +128,5 @@
 # Feature 75: soc-efficacy-scorecard
 
 # Feature 76: local-ai-copilot
+
+# Feature 77: local-ai-intent-nlp
