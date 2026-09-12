@@ -34,3 +34,5 @@
 # Feature 28: threat-intel-cache
 
 # Feature 29: dpi-packet-dissector
+
+# Feature 30: compliance-nist-csf
