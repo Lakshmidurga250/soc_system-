@@ -38,3 +38,5 @@
 # Feature 30: compliance-nist-csf
 
 # Feature 31: compliance-iso27001
+
+# Feature 32: compliance-pci-dss
