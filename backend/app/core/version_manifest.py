@@ -156,3 +156,5 @@
 # Feature 89: sigma-rules-massive
 
 # Feature 90: yara-malware-massive
+
+# Feature 91: snort-ids-massive
