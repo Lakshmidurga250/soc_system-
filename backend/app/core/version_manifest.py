@@ -110,3 +110,5 @@
 # Feature 66: itdr-pass-spraying
 
 # Feature 67: itdr-asrep-roasting
+
+# Feature 68: cvss-v31-calculator
