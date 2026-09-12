@@ -4,7 +4,7 @@ from .v1 import (
     auth, users, dashboard, events, logs, alerts, incidents,
     graph, intelligence, detection, ml, behavior,
     risk, response, approvals, reports, audit, simulation, health,
-    assistant, assets, analytics
+    assistant, assets, analytics, search
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -32,3 +32,4 @@ router.include_router(health.router)
 router.include_router(assistant.router)
 router.include_router(assets.router)
 router.include_router(analytics.router)
+router.include_router(search.router)
