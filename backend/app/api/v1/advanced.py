@@ -34,6 +34,12 @@ from ...services.compliance_engine import compliance_engine
 from ...intelligence.mitre_matrix import mitre_kb, MitreTactic
 from ...engines.multi_signal_correlation import correlation_service
 from ...services.enterprise_reporting import report_engine
+from ...ml.ueba_engine import ueba_engine
+from ...engines.itdr_engine import itdr_engine
+from ...services.vulnerability_engine import vulnerability_engine, AttackVector, AttackComplexity, PrivilegesRequired, UserInteraction, Scope, CIAImpact
+from ...services.threat_hunting import hunting_repository, HuntQueryLanguage
+from ...services.adversary_emulation import adversary_emulator
+
 
 
 
@@ -576,5 +582,181 @@ def generate_executive_summary_report(
         author_analyst=current_user.username,
     )
     return report.__dict__
+
+
+# ----------------------------------------------------------------------
+# 16. User & Entity Behavior Analytics (UEBA) Endpoints
+# ----------------------------------------------------------------------
+class UEBAAnalyzeRequest(BaseModel):
+    username: str = Field(..., json_schema_extra={"example": "bob_finance"})
+    login_hour: int = Field(..., ge=0, le=23, json_schema_extra={"example": 3})
+    accessed_host: str = Field(..., json_schema_extra={"example": "dc-01"})
+    bytes_transferred: float = Field(default=1024.0, json_schema_extra={"example": 150000000.0})
+    failed_login_count: int = Field(default=0, json_schema_extra={"example": 5})
+    session_events_count: int = Field(default=20)
+    is_weekend: bool = Field(default=False)
+
+
+@router.post("/ueba/analyze")
+def analyze_ueba_session(
+    req: UEBAAnalyzeRequest,
+    current_user: User = Depends(current_user),
+):
+    """Evaluates user session telemetry against statistical departmental baselines."""
+    findings = ueba_engine.analyze_user_activity_session(
+        username=req.username,
+        login_hour=req.login_hour,
+        accessed_host=req.accessed_host,
+        bytes_transferred=req.bytes_transferred,
+        failed_login_count=req.failed_login_count,
+        session_events_count=req.session_events_count,
+        is_weekend=req.is_weekend,
+    )
+    return {
+        "username": req.username,
+        "is_anomalous": len(findings) > 0,
+        "anomaly_count": len(findings),
+        "max_risk_score": max([f.risk_score for f in findings], default=0.0),
+        "findings": [f.__dict__ for f in findings],
+    }
+
+
+# ----------------------------------------------------------------------
+# 17. Identity Threat Detection & Response (ITDR) Endpoints
+# ----------------------------------------------------------------------
+class ITDRKerberosRequest(BaseModel):
+    event_id: str = Field(..., json_schema_extra={"example": "4769"})
+    service_name: str = Field(..., json_schema_extra={"example": "MSSQLSvc/db01.corp.local"})
+    ticket_encryption_type: str = Field(..., json_schema_extra={"example": "0x17"})
+    client_address: str = Field(default="10.0.0.50")
+    target_username: str = Field(default="svc_sql")
+
+
+class ITDRDCSyncRequest(BaseModel):
+    access_mask: str = Field(default="0x100")
+    caller_username: str = Field(default="compromised_admin")
+    caller_ip: str = Field(default="192.168.1.55")
+    is_domain_controller: bool = Field(default=False)
+    requested_guid: Optional[str] = None
+
+
+@router.post("/itdr/kerberos")
+def inspect_kerberos_itdr(
+    req: ITDRKerberosRequest,
+    current_user: User = Depends(current_user),
+):
+    """Analyzes Kerberos ticket requests for Kerberoasting and AS-REP Roasting."""
+    finding = itdr_engine.inspect_kerberos_event(
+        event_id=req.event_id,
+        service_name=req.service_name,
+        ticket_encryption_type=req.ticket_encryption_type,
+        client_address=req.client_address,
+        target_username=req.target_username,
+    )
+    return {"is_threat": finding is not None, "finding": finding.__dict__ if finding else None}
+
+
+@router.post("/itdr/dcsync")
+def inspect_dcsync_itdr(
+    req: ITDRDCSyncRequest,
+    current_user: User = Depends(current_user),
+):
+    """Detects unauthorized Active Directory domain replication (DCSync) via DRSUAPI."""
+    finding = itdr_engine.detect_dcsync_attack(
+        access_mask=req.access_mask,
+        caller_username=req.caller_username,
+        caller_ip=req.caller_ip,
+        is_domain_controller=req.is_domain_controller,
+        requested_guid=req.requested_guid,
+    )
+    return {"is_threat": finding is not None, "finding": finding.__dict__ if finding else None}
+
+
+# ----------------------------------------------------------------------
+# 18. Vulnerability Management & CVSS Calculator Endpoints
+# ----------------------------------------------------------------------
+class CVSSCalculateRequest(BaseModel):
+    attack_vector: str = "N"
+    attack_complexity: str = "L"
+    privileges_required: str = "N"
+    user_interaction: str = "N"
+    scope: str = "U"
+    confidentiality: str = "H"
+    integrity: str = "H"
+    availability: str = "H"
+
+
+class AssetExposureRequest(BaseModel):
+    asset_criticality: float = Field(default=1.0, ge=0.0, le=1.0)
+    cve_ids: List[str] = Field(default_factory=list, json_schema_extra={"example": ["CVE-2021-44228", "CVE-2017-0144"]})
+    is_internet_exposed: bool = True
+
+
+@router.post("/vulnerability/cvss")
+def calculate_cvss_score(
+    req: CVSSCalculateRequest,
+    current_user: User = Depends(current_user),
+):
+    """Calculates official CVSS v3.1 base score, subscores, and vector string."""
+    score = vulnerability_engine.calculate_cvss_v31(
+        av=AttackVector(req.attack_vector),
+        ac=AttackComplexity(req.attack_complexity),
+        pr=PrivilegesRequired(req.privileges_required),
+        ui=UserInteraction(req.user_interaction),
+        s=Scope(req.scope),
+        c=CIAImpact(req.confidentiality),
+        i=CIAImpact(req.integrity),
+        a=CIAImpact(req.availability),
+    )
+    return score.__dict__
+
+
+@router.post("/vulnerability/asset-exposure")
+def calculate_asset_exposure(
+    req: AssetExposureRequest,
+    current_user: User = Depends(current_user),
+):
+    """Calculates consolidated asset risk weighted by asset criticality and CVE exploitability."""
+    return vulnerability_engine.calculate_asset_exposure_risk(
+        asset_criticality=req.asset_criticality,
+        cve_ids=req.cve_ids,
+        is_internet_exposed=req.is_internet_exposed,
+    )
+
+
+# ----------------------------------------------------------------------
+# 19. Threat Hunting Playbooks Endpoints
+# ----------------------------------------------------------------------
+@router.get("/hunting/packages")
+def list_threat_hunt_packages(current_user: User = Depends(current_user)):
+    """Lists all proactive threat hunting packages and target techniques."""
+    return hunting_repository.list_hunt_packages()
+
+
+@router.get("/hunting/query/{hunt_id}")
+def get_translated_hunt_query(
+    hunt_id: str,
+    language: str = Query("SPLUNK_SPL", description="SIGMA, SPLUNK_SPL, ELASTIC_EQL, KUSTO_KQL"),
+    current_user: User = Depends(current_user),
+):
+    """Retrieves translated query for a threat hunting package in specified SIEM dialect."""
+    try:
+        lang_enum = HuntQueryLanguage[language.upper()]
+        query = hunting_repository.get_query(hunt_id, lang_enum)
+        if not query:
+            raise HTTPException(status_code=404, detail="Query translation not found")
+        return {"hunt_id": hunt_id, "language": language.upper(), "query": query}
+    except KeyError:
+        raise HTTPException(status_code=400, detail=f"Unsupported query language '{language}'")
+
+
+# ----------------------------------------------------------------------
+# 20. Adversary Emulation Framework Endpoints
+# ----------------------------------------------------------------------
+@router.post("/emulation/run")
+def run_adversary_emulations(current_user: User = Depends(current_user)):
+    """Executes safe Atomic Red Team test simulations against loaded SentinelAI detection engines."""
+    return adversary_emulator.run_all_emulations()
+
 
 
