@@ -134,3 +134,5 @@
 # Feature 78: synthetic-telemetry-gen
 
 # Feature 79: smb-v3-decoder
+
+# Feature 80: kerberos-msg-decoder
