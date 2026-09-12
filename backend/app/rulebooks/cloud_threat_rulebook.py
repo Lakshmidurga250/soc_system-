@@ -54,7 +54,7 @@ CLOUD_DETECTION_RULES: List[CloudDetectionRule] = [
         severity=CloudThreatSeverity.HIGH,
         description="Detects creation or attachment of IAM policy with Action='*' and Resource='*'.",
         event_names=["CreatePolicy", "CreatePolicyVersion", "PutUserPolicy", "AttachUserPolicy"],
-        filter_logic="requestParameters.policyDocument contains '"Action": "*"' and '"Resource": "*"'",
+        filter_logic='requestParameters.policyDocument contains \'"Action": "*\' and \'"Resource": "*\'',
         remediation_guidance="Apply Principle of Least Privilege and restrict IAM Put/Attach permissions."
     ),
     CloudDetectionRule(
@@ -65,7 +65,7 @@ CLOUD_DETECTION_RULES: List[CloudDetectionRule] = [
         severity=CloudThreatSeverity.HIGH,
         description="Detects bucket policies allowing public anonymous read/write access.",
         event_names=["PutBucketPolicy", "PutBucketAcl"],
-        filter_logic="requestParameters.bucketPolicy contains '"Principal": "*"'",
+        filter_logic='requestParameters.bucketPolicy contains \'"Principal": "*\'',
         remediation_guidance="Enable S3 Block Public Access at the organization and bucket levels."
     ),
     CloudDetectionRule(

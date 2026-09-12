@@ -68,6 +68,8 @@ malware_families = [
 for idx in range(1, 160):
     fam, desc, sev, patterns = malware_families[idx % len(malware_families)]
     rule_name = f"MALW_{fam}_{idx:03d}"
+    p0_clean = patterns[0].split("=")[1].strip().replace('"', '')
+    p1_clean = patterns[1].split("=")[1].strip().replace('"', '').replace('\\', '\\\\')
     yara_lines.extend([
         f'        self.rules["{rule_name}"] = YaraRule(',
         f'            name="{rule_name}",',
@@ -80,8 +82,8 @@ for idx in range(1, 160):
         f'                "reference": "https://threatfox.abuse.ch/"',
         f'            }},',
         f'            strings={{',
-        f'                "$sig_{idx}_a": ("text", "{patterns[0].split("=")[1].strip().replace(\'"\', "")}"),',
-        f'                "$sig_{idx}_b": ("regex", r"(?i){patterns[1].split("=")[1].strip().replace(\'"\', "").replace("\\\\", "\\\\\\\\")}")',
+        f'                "$sig_{idx}_a": ("text", "{p0_clean}"),',
+        f'                "$sig_{idx}_b": ("regex", r"(?i){p1_clean}")',
         f'            }},',
         f'            condition="$sig_{idx}_a and $sig_{idx}_b",',
         f'            tags=["malware.{fam.lower()}", "threat.family.{fam.lower()}", "severity.{sev.lower()}"]',
@@ -886,10 +888,10 @@ ueba_page_lines = [
 for i in range(1, 45):
     sev = ["CRITICAL", "HIGH", "MEDIUM", "LOW"][i % 4]
     atype = ["IMPOSSIBLE_TRAVEL_VELOCITY", "OFF_HOURS_ACTIVITY", "EXCESSIVE_DATA_EXFILTRATION", "ANOMALOUS_PEER_DEVIATION", "PRIVILEGED_SERVICE_ACCESS"][i % 5]
-    user_n = f"user_{['alice', 'bob', 'charlie', 'david', 'emma'][i % 5]}_{i:03d}"
-    ueba_page_lines.extend([
-        f'    {{ id: "ANOM-{i:04d}", user: "{user_n}", type: "{atype}", severity: "{sev}", score: {70 + (i%28)}, time: "2026-02-15 {10 + (i%12):02d}:{(i*7)%60:02d} UTC", desc: "Observed {atype.lower().replace("_", " ")} deviating from 30-day baseline." }},'
-    ])
+    user_n = f"user_demo_{i:03d}"
+    score_val = 70 + (i % 28)
+    item_str = '    { id: "ANOM-' + f'{i:04d}' + '", user: "' + user_n + '", type: "' + atype + '", severity: "' + sev + '", score: ' + str(score_val) + ', time: "2026-02-15 12:00 UTC", desc: "Observed anomaly deviating from 30-day baseline." },'
+    ueba_page_lines.append(item_str)
 
 ueba_page_lines.extend([
     "  ];",
@@ -957,7 +959,7 @@ ueba_page_lines.extend([
     "    </div>",
     "  );",
     "};",
-]
+])
 write_module("frontend/src/pages/UebaDashboardPage.tsx", ueba_page_lines)
 
 # B. CloudSecurityPage.tsx
@@ -1017,7 +1019,7 @@ cloud_page_lines.extend([
     "    </div>",
     "  );",
     "};",
-]
+])
 write_module("frontend/src/pages/CloudSecurityPage.tsx", cloud_page_lines)
 
 # =========================================================================
