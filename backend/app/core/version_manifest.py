@@ -148,3 +148,5 @@
 # Feature 85: iot-scada-modbus
 
 # Feature 86: cve-knowledgebase
+
+# Feature 87: malicious-c2-infra
