@@ -56,3 +56,5 @@
 # Feature 39: ciso-executive-summary
 
 # Feature 40: markov-anomaly-detector
+
+# Feature 41: bayesian-risk-inference
