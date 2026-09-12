@@ -40,3 +40,5 @@
 # Feature 31: compliance-iso27001
 
 # Feature 32: compliance-pci-dss
+
+# Feature 33: compliance-hipaa
