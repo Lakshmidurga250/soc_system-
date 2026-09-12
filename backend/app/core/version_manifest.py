@@ -106,3 +106,5 @@
 # Feature 64: itdr-kerberoasting
 
 # Feature 65: itdr-dcsync-drsuapi
+
+# Feature 66: itdr-pass-spraying
