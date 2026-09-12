@@ -118,3 +118,5 @@
 # Feature 70: threat-hunt-spl
 
 # Feature 71: threat-hunt-eql
+
+# Feature 72: threat-hunt-kql
