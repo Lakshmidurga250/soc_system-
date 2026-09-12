@@ -100,3 +100,5 @@
 # Feature 61: ueba-offhours-radar
 
 # Feature 62: ueba-egress-tracker
+
+# Feature 63: ueba-impossible-travel
