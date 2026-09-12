@@ -24,3 +24,5 @@
 # Feature 23: cloudtrail-gcp
 
 # Feature 24: sigma-ast-compiler
+
+# Feature 25: sigma-modifiers
