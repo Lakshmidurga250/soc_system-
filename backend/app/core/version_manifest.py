@@ -90,3 +90,5 @@
 # Feature 56: forensics-shimcache
 
 # Feature 57: forensics-amcache-hve
+
+# Feature 58: forensics-memory-vads
