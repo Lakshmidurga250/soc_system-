@@ -124,3 +124,5 @@
 # Feature 73: threat-hunt-sigma
 
 # Feature 74: adversary-emulation
+
+# Feature 75: soc-efficacy-scorecard
