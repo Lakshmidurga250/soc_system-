@@ -20,3 +20,5 @@
 # Feature 21: suricata-eve
 
 # Feature 22: cef-syslog
+
+# Feature 23: cloudtrail-gcp
