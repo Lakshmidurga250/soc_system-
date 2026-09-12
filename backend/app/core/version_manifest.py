@@ -114,3 +114,5 @@
 # Feature 68: cvss-v31-calculator
 
 # Feature 69: asset-exposure-matrix
+
+# Feature 70: threat-hunt-spl
