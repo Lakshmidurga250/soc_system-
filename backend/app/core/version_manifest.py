@@ -94,3 +94,5 @@
 # Feature 58: forensics-memory-vads
 
 # Feature 59: forensics-linux-triage
+
+# Feature 60: ueba-peer-baselines
