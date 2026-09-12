@@ -142,3 +142,5 @@
 # Feature 82: dns-dga-shannon-entropy
 
 # Feature 83: http2-http3-quic
+
+# Feature 84: radius-tacacs-aaa
