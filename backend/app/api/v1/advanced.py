@@ -31,6 +31,10 @@ from ...engines.snort_engine import snort_ids
 from ...intelligence.massive_ioc_catalog import threat_catalog, IoCType
 from ...parsers.pcap_dpi_parser import dpi_analyzer
 from ...services.compliance_engine import compliance_engine
+from ...intelligence.mitre_matrix import mitre_kb, MitreTactic
+from ...engines.multi_signal_correlation import correlation_service
+from ...services.enterprise_reporting import report_engine
+
 
 
 router = APIRouter(prefix="/advanced", tags=["Advanced SOC Engines"])
@@ -469,4 +473,108 @@ def dissect_packet_telemetry(
 def audit_compliance_posture(current_user: User = Depends(current_user)):
     """Calculates continuous compliance posture scores across NIST CSF, ISO 27001, PCI-DSS, HIPAA, and SOC 2."""
     return compliance_engine.evaluate_posture({})
+
+
+# ----------------------------------------------------------------------
+# 13. MITRE ATT&CK Matrix & Navigator Endpoints
+# ----------------------------------------------------------------------
+class MitreNavigatorRequest(BaseModel):
+    detected_techniques: List[str] = Field(default_factory=list, json_schema_extra={"example": ["T1059.001", "T1003.001", "T1486"]})
+
+
+@router.get("/mitre/techniques")
+def list_mitre_techniques(
+    tactic: Optional[str] = None,
+    current_user: User = Depends(current_user),
+):
+    """Lists enterprise MITRE ATT&CK techniques filtered optionally by tactic."""
+    if tactic:
+        try:
+            tac_enum = MitreTactic[tactic.upper()]
+            return [t.__dict__ for t in mitre_kb.get_techniques_by_tactic(tac_enum)]
+        except KeyError:
+            pass
+    return [t.__dict__ for t in mitre_kb.techniques.values()]
+
+
+@router.post("/mitre/navigator-layer")
+def generate_mitre_navigator_layer(
+    req: MitreNavigatorRequest,
+    current_user: User = Depends(current_user),
+):
+    """Generates visual ATT&CK Navigator matrix JSON with heatmap scoring."""
+    return mitre_kb.generate_navigator_matrix(req.detected_techniques)
+
+
+@router.get("/mitre/search")
+def search_mitre_catalog(
+    q: str = Query(..., min_length=2),
+    current_user: User = Depends(current_user),
+):
+    """Searches MITRE ATT&CK techniques by keyword, ID, or description."""
+    results = mitre_kb.search_techniques(q)
+    return {
+        "query": q,
+        "count": len(results),
+        "results": [r.__dict__ for r in results],
+    }
+
+
+# ----------------------------------------------------------------------
+# 14. Multi-Signal Event Correlation Endpoints
+# ----------------------------------------------------------------------
+class CorrelationStreamRequest(BaseModel):
+    events: List[Dict[str, Any]] = Field(..., min_length=2)
+
+
+@router.post("/correlation/correlate")
+def correlate_event_stream_api(
+    req: CorrelationStreamRequest,
+    current_user: User = Depends(current_user),
+):
+    """Correlates a stream of heterogeneous events into multi-phase attack scenario candidates."""
+    candidates = correlation_service.correlate_event_stream(req.events)
+    return {
+        "input_events_count": len(req.events),
+        "candidates_count": len(candidates),
+        "candidates": [c.__dict__ for c in candidates],
+    }
+
+
+# ----------------------------------------------------------------------
+# 15. Enterprise Report Generator Endpoints
+# ----------------------------------------------------------------------
+class IncidentDossierRequest(BaseModel):
+    incident_data: Dict[str, Any] = Field(..., json_schema_extra={"example": {"id": "INC-2026-0042", "title": "Ransomware Outbreak", "severity": "CRITICAL", "risk_score": 95.0}})
+
+
+class ExecutiveSummaryRequest(BaseModel):
+    soc_stats: Dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/reports/incident-dossier")
+def generate_incident_dossier_report(
+    req: IncidentDossierRequest,
+    current_user: User = Depends(current_user),
+):
+    """Generates complete forensic incident dossier with Markdown and self-contained HTML."""
+    report = report_engine.generate_incident_dossier(
+        incident_data=req.incident_data,
+        author_analyst=current_user.username,
+    )
+    return report.__dict__
+
+
+@router.post("/reports/executive-summary")
+def generate_executive_summary_report(
+    req: ExecutiveSummaryRequest,
+    current_user: User = Depends(current_user),
+):
+    """Generates executive CISO operational briefing report."""
+    report = report_engine.generate_executive_summary(
+        soc_stats=req.soc_stats,
+        author_analyst=current_user.username,
+    )
+    return report.__dict__
+
 
