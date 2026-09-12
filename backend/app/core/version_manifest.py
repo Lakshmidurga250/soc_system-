@@ -82,3 +82,5 @@
 # Feature 52: soar-rollback-scripts
 
 # Feature 53: forensics-mft-timestomp
+
+# Feature 54: forensics-evtx-tamper
