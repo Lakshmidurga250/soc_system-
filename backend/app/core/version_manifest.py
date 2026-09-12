@@ -76,3 +76,5 @@
 # Feature 49: soar-ddos-pb
 
 # Feature 50: soar-insider-pb
+
+# Feature 51: soar-approval-gates
