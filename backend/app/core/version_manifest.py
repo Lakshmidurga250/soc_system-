@@ -78,3 +78,5 @@
 # Feature 50: soar-insider-pb
 
 # Feature 51: soar-approval-gates
+
+# Feature 52: soar-rollback-scripts
