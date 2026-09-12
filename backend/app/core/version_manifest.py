@@ -88,3 +88,5 @@
 # Feature 55: forensics-prefetch-pf
 
 # Feature 56: forensics-shimcache
+
+# Feature 57: forensics-amcache-hve
