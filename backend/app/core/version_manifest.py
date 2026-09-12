@@ -16,3 +16,5 @@
 # Feature 19: zeek-dns-entropy
 
 # Feature 20: zeek-ssl-ja3
+
+# Feature 21: suricata-eve
