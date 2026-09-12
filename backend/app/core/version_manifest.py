@@ -92,3 +92,5 @@
 # Feature 57: forensics-amcache-hve
 
 # Feature 58: forensics-memory-vads
+
+# Feature 59: forensics-linux-triage
