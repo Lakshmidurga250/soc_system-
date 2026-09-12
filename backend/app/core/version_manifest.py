@@ -14,3 +14,5 @@
 # Feature 18: windows-security
 
 # Feature 19: zeek-dns-entropy
+
+# Feature 20: zeek-ssl-ja3
