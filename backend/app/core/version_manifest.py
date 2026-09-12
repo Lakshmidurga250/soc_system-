@@ -28,3 +28,5 @@
 # Feature 25: sigma-modifiers
 
 # Feature 26: yara-binary-scanner
+
+# Feature 27: snort-ids-engine
