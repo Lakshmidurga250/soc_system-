@@ -61,16 +61,21 @@ class WindowsDeepParser(BaseParser):
 
     def _parse_xml_events(self, xml_content: str) -> List[Dict[str, Any]]:
         events: List[Dict[str, Any]] = []
-        # Wrap fragmented XML chunks if necessary
         clean_xml = xml_content.strip()
-        if not clean_xml.startswith("<Events>") and not clean_xml.startswith("<Event "):
+        # Strip xmlns attributes to make tag finding completely agnostic to namespace variations
+        clean_xml = re.sub(r'\sxmlns(:\w+)?="[^"]+"', '', clean_xml)
+        
+        if not clean_xml.startswith("<Events>") and not clean_xml.startswith("<Event"):
             clean_xml = f"<Events>{clean_xml}</Events>"
-        elif clean_xml.startswith("<Event "):
+        elif clean_xml.startswith("<Event"):
             clean_xml = f"<Events>{clean_xml}</Events>"
 
         try:
             root = ET.fromstring(clean_xml)
-            for event_el in root.findall(".//Event") or [root] if root.tag.endswith("Event") else root.findall("Event"):
+            event_nodes = [e for e in root.iter() if e.tag.endswith("Event") and e != root]
+            if not event_nodes and root.tag.endswith("Event"):
+                event_nodes = [root]
+            for event_el in event_nodes:
                 parsed = self._extract_xml_node(event_el)
                 if parsed:
                     events.append(parsed)
@@ -95,33 +100,40 @@ class WindowsDeepParser(BaseParser):
         computer = "windows-host"
 
         # System Header
-        system_el = el.find("{*}System") if el.find("{*}System") is not None else el.find("System")
+        system_el = None
+        for child in el:
+            if child.tag.endswith("System"):
+                system_el = child
+                break
         if system_el is not None:
-            id_el = system_el.find("{*}EventID") or system_el.find("EventID")
-            if id_el is not None:
-                event_id = id_el.text.strip() if id_el.text else ""
-            prov_el = system_el.find("{*}Provider") or system_el.find("Provider")
-            if prov_el is not None:
-                provider = prov_el.attrib.get("Name", "")
-            time_el = system_el.find("{*}TimeCreated") or system_el.find("TimeCreated")
-            if time_el is not None:
-                timestamp = time_el.attrib.get("SystemTime", timestamp)
-            comp_el = system_el.find("{*}Computer") or system_el.find("Computer")
-            if comp_el is not None:
-                computer = comp_el.text.strip() if comp_el.text else computer
-            chan_el = system_el.find("{*}Channel") or system_el.find("Channel")
-            if chan_el is not None:
-                channel = chan_el.text.strip() if chan_el.text else ""
+            for node in system_el:
+                tag = node.tag.split("}")[-1]
+                if tag == "EventID":
+                    event_id = node.text.strip() if node.text else ""
+                elif tag == "Provider":
+                    provider = node.attrib.get("Name", "")
+                elif tag == "TimeCreated":
+                    timestamp = node.attrib.get("SystemTime", timestamp)
+                elif tag == "Computer":
+                    computer = node.text.strip() if node.text else computer
+                elif tag == "Channel":
+                    channel = node.text.strip() if node.text else ""
 
         # EventData Fields
         event_data: Dict[str, str] = {}
-        data_parent = el.find("{*}EventData") or el.find("EventData")
+        data_parent = None
+        for child in el:
+            if child.tag.endswith("EventData"):
+                data_parent = child
+                break
         if data_parent is not None:
-            for data_node in data_parent.findall("{*}Data") or data_parent.findall("Data"):
-                name = data_node.attrib.get("Name")
-                val = data_node.text or ""
-                if name:
-                    event_data[name] = val
+            for data_node in data_parent:
+                if data_node.tag.endswith("Data"):
+                    name = data_node.attrib.get("Name")
+                    val = data_node.text or ""
+                    if name:
+                        event_data[name] = val
+
 
         meta = self.SUPPORTED_SYSMON_EVENTS.get(event_id) or self.SUPPORTED_SECURITY_EVENTS.get(event_id, {
             "category": "Windows Telemetry",
@@ -139,6 +151,7 @@ class WindowsDeepParser(BaseParser):
 
         return {
             "timestamp": timestamp,
+            "event_id": event_id,
             "source": f"windows_{provider.lower() or 'security'}",
             "source_ip": source_ip,
             "destination_ip": event_data.get("DestinationIp") or "10.0.0.1",
@@ -150,6 +163,7 @@ class WindowsDeepParser(BaseParser):
             "category": meta["category"],
             "action": meta["action"],
             "severity": meta["severity"],
+
             "status": "FAILURE" if event_id == "4625" else "SUCCESS",
             "resource": process_name or command_line[:120] or event_data.get("TargetFilename") or channel,
             "raw_message": ET.tostring(el, encoding="unicode"),

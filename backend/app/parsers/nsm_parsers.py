@@ -101,6 +101,7 @@ class ZeekNSMParser(BaseParser):
             "username": "network",
             "hostname": obj.get("host") or obj.get("query") or "zeek-sensor",
             "event_type": f"ZEEK_{path.upper()}_TELEMETRY",
+            "dns_query": obj.get("query"),
             "category": "Network Monitoring",
             "action": f"Zeek {path} Logged",
             "severity": "LOW",
@@ -109,6 +110,7 @@ class ZeekNSMParser(BaseParser):
             "raw_message": json.dumps(obj),
             "metadata_json": obj
         }
+
 
 
 class SuricataEVEParser(BaseParser):
