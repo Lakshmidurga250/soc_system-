@@ -98,3 +98,5 @@
 # Feature 60: ueba-peer-baselines
 
 # Feature 61: ueba-offhours-radar
+
+# Feature 62: ueba-egress-tracker
