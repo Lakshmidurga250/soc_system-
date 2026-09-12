@@ -22,3 +22,5 @@
 # Feature 22: cef-syslog
 
 # Feature 23: cloudtrail-gcp
+
+# Feature 24: sigma-ast-compiler
