@@ -126,3 +126,5 @@
 # Feature 74: adversary-emulation
 
 # Feature 75: soc-efficacy-scorecard
+
+# Feature 76: local-ai-copilot
