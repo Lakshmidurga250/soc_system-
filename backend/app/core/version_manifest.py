@@ -152,3 +152,5 @@
 # Feature 87: malicious-c2-infra
 
 # Feature 88: threat-actor-dossiers
+
+# Feature 89: sigma-rules-massive
