@@ -10,3 +10,5 @@
 # Feature 16: sysmon-process
 
 # Feature 17: sysmon-network
+
+# Feature 18: windows-security
