@@ -12,3 +12,5 @@
 # Feature 17: sysmon-network
 
 # Feature 18: windows-security
+
+# Feature 19: zeek-dns-entropy
