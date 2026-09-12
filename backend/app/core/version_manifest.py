@@ -146,3 +146,5 @@
 # Feature 84: radius-tacacs-aaa
 
 # Feature 85: iot-scada-modbus
+
+# Feature 86: cve-knowledgebase
