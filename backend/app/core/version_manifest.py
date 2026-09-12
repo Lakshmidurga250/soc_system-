@@ -42,3 +42,5 @@
 # Feature 32: compliance-pci-dss
 
 # Feature 33: compliance-hipaa
+
+# Feature 34: compliance-soc2
