@@ -140,3 +140,5 @@
 # Feature 81: tls-ja4-fingerprints
 
 # Feature 82: dns-dga-shannon-entropy
+
+# Feature 83: http2-http3-quic
