@@ -160,3 +160,5 @@
 # Feature 91: snort-ids-massive
 
 # Feature 92: ui-theme-lavender
+
+# Feature 93: ui-nav-workspaces
