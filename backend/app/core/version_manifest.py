@@ -30,3 +30,5 @@
 # Feature 26: yara-binary-scanner
 
 # Feature 27: snort-ids-engine
+
+# Feature 28: threat-intel-cache
