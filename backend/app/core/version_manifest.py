@@ -104,3 +104,5 @@
 # Feature 63: ueba-impossible-travel
 
 # Feature 64: itdr-kerberoasting
+
+# Feature 65: itdr-dcsync-drsuapi
