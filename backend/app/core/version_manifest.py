@@ -70,3 +70,5 @@
 # Feature 46: soar-ransomware-pb
 
 # Feature 47: soar-phishing-pb
+
+# Feature 48: soar-credential-pb
