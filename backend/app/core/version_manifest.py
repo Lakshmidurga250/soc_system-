@@ -130,3 +130,5 @@
 # Feature 76: local-ai-copilot
 
 # Feature 77: local-ai-intent-nlp
+
+# Feature 78: synthetic-telemetry-gen
