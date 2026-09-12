@@ -50,3 +50,5 @@
 # Feature 36: mitre-heatmap-calc
 
 # Feature 37: correlation-engine
+
+# Feature 38: incident-dossier-pdf
