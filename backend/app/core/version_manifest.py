@@ -18,3 +18,5 @@
 # Feature 20: zeek-ssl-ja3
 
 # Feature 21: suricata-eve
+
+# Feature 22: cef-syslog
