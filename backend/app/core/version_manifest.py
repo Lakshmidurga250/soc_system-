@@ -66,3 +66,5 @@
 # Feature 44: graph-pagerank-risk
 
 # Feature 45: graph-blast-radius
+
+# Feature 46: soar-ransomware-pb
