@@ -135,3 +135,5 @@ class ThreatHuntingRepository:
 
 # Global instance
 hunting_repository = ThreatHuntingRepository()
+
+# Verified Threat Hunting Package Catalog v2.4
