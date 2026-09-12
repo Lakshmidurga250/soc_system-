@@ -68,3 +68,5 @@
 # Feature 45: graph-blast-radius
 
 # Feature 46: soar-ransomware-pb
+
+# Feature 47: soar-phishing-pb
