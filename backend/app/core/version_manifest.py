@@ -26,3 +26,5 @@
 # Feature 24: sigma-ast-compiler
 
 # Feature 25: sigma-modifiers
+
+# Feature 26: yara-binary-scanner
