@@ -166,3 +166,5 @@
 # Feature 94: ui-dashboard-metrics
 
 # Feature 95: ui-events-explorer
+
+# Feature 96: ui-alert-triage-board
