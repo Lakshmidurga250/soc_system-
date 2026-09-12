@@ -72,3 +72,5 @@
 # Feature 47: soar-phishing-pb
 
 # Feature 48: soar-credential-pb
+
+# Feature 49: soar-ddos-pb
