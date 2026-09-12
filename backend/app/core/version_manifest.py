@@ -74,3 +74,5 @@
 # Feature 48: soar-credential-pb
 
 # Feature 49: soar-ddos-pb
+
+# Feature 50: soar-insider-pb
