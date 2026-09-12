@@ -112,3 +112,5 @@
 # Feature 67: itdr-asrep-roasting
 
 # Feature 68: cvss-v31-calculator
+
+# Feature 69: asset-exposure-matrix
