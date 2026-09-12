@@ -468,3 +468,5 @@ I am your **100% offline, privacy-first local security assistant**. I analyze lo
             markdown_content=md.strip(),
             suggested_actions=["Explore Incident Dashboard", "Run Synthetic Telemetry Ingestion", "Inspect Model Registry"]
         )
+
+# Deterministic Local Copilot Engine v2.0
