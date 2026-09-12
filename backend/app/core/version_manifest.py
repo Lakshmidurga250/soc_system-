@@ -32,3 +32,5 @@
 # Feature 27: snort-ids-engine
 
 # Feature 28: threat-intel-cache
+
+# Feature 29: dpi-packet-dissector
